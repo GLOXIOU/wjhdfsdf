@@ -1,0 +1,880 @@
+.glow-ah {
+    position: absolute;
+    width: 55vw;
+    height: 55vw;
+    border-radius: 50%;
+    filter: blur(150px);
+    opacity: 0.09;
+    top: 20%;
+    left: 50%;
+    transform: translateX(-50%);
+    background: radial-gradient(circle, #22c55e 0%, #16a34a 60%, transparent 100%);
+    pointer-events: none;
+}
+
+.ah-content {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+    padding-bottom: 3rem;
+}
+
+.ah-hero {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 1rem;
+    background: linear-gradient(135deg, rgba(34, 197, 94, 0.1), rgba(22, 163, 74, 0.06));
+    border: 1px solid rgba(34, 197, 94, 0.3);
+    border-radius: 24px;
+    padding: 1.4rem 1.75rem;
+    box-shadow: 0 10px 32px rgba(34, 197, 94, 0.08), var(--card-shadow);
+}
+
+.ah-hero-left {
+    display: flex;
+    align-items: center;
+    gap: 1.1rem;
+}
+
+.ah-hero-icon {
+    width: 52px;
+    height: 52px;
+    border-radius: 14px;
+    background: linear-gradient(135deg, rgba(34, 197, 94, 0.3), rgba(22, 163, 74, 0.2));
+    border: 1px solid rgba(34, 197, 94, 0.45);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.6rem;
+    flex-shrink: 0;
+    box-shadow: 0 0 20px rgba(34, 197, 94, 0.2);
+}
+
+.ah-hero h1 {
+    font-size: 1.7rem;
+    font-weight: 900;
+    background: linear-gradient(135deg, #4ade80, #f97316);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    line-height: 1.2;
+    margin-bottom: 0.2rem;
+}
+
+.ah-hero p {
+    color: var(--text-muted);
+    font-size: 0.9rem;
+}
+
+.ah-wallet-badge {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    padding: 0.6rem 1rem;
+    font-weight: 800;
+    font-size: 1rem;
+    color: #facc15;
+    white-space: nowrap;
+}
+
+.ah-wallet-badge i {
+    width: 16px;
+    height: 16px;
+    color: #facc15;
+}
+
+.ah-tabs {
+    display: flex;
+    gap: 0.5rem;
+    background: var(--card-grad);
+    border: 1px solid var(--card-border-strong);
+    border-radius: 16px;
+    padding: 0.4rem;
+    box-shadow: var(--card-shadow);
+}
+
+.ah-tab {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.45rem;
+    padding: 0.65rem 1rem;
+    border: 1px solid transparent;
+    border-radius: 12px;
+    background: transparent;
+    color: var(--text-muted);
+    font-weight: 700;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: background 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+    position: relative;
+    white-space: nowrap;
+}
+
+.ah-tab i {
+    width: 15px;
+    height: 15px;
+    flex-shrink: 0;
+}
+
+.ah-tab:hover {
+    color: #fff;
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.ah-tab.active {
+    background: linear-gradient(135deg, rgba(34, 197, 94, 0.18), rgba(22, 163, 74, 0.12));
+    border-color: rgba(34, 197, 94, 0.4);
+    color: #4ade80;
+    box-shadow: 0 4px 12px rgba(34, 197, 94, 0.12);
+}
+
+.ah-tab-badge {
+    position: absolute;
+    top: -5px;
+    right: -5px;
+    min-width: 16px;
+    height: 16px;
+    border-radius: 999px;
+    background: linear-gradient(135deg, #22c55e, #16a34a);
+    color: #fff;
+    font-size: 0.65rem;
+    font-weight: 900;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 4px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.ah-tab-badge.hidden {
+    display: none;
+}
+
+.ah-tab-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.ah-tab-panel.hidden {
+    display: none;
+}
+
+.ah-search-bar {
+    display: flex;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+}
+
+.ah-search-input-wrap {
+    flex: 1;
+    min-width: 200px;
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    background: var(--card-grad);
+    border: 1px solid var(--card-border-strong);
+    border-radius: 12px;
+    padding: 0.6rem 1rem;
+    transition: border-color 0.2s ease;
+}
+
+.ah-search-input-wrap:focus-within {
+    border-color: rgba(34, 197, 94, 0.45);
+}
+
+.ah-search-input-wrap i {
+    width: 16px;
+    height: 16px;
+    color: var(--text-muted);
+    flex-shrink: 0;
+}
+
+.ah-search-input-wrap input {
+    flex: 1;
+    background: transparent;
+    border: none;
+    outline: none;
+    color: var(--text-main);
+    font-size: 0.9rem;
+    font-weight: 500;
+}
+
+.ah-search-input-wrap input::placeholder {
+    color: var(--text-muted);
+}
+
+.ah-filters {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+.ah-filters select {
+    background: var(--card-grad);
+    border: 1px solid var(--card-border-strong);
+    border-radius: 12px;
+    padding: 0.6rem 0.9rem;
+    color: var(--text-main);
+    font-size: 0.88rem;
+    font-weight: 600;
+    cursor: pointer;
+    outline: none;
+    transition: border-color 0.2s ease;
+    -webkit-appearance: none;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23a3a3a3' stroke-width='2.5'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 0.7rem center;
+    padding-right: 2rem;
+}
+
+.ah-filters select:focus {
+    border-color: rgba(34, 197, 94, 0.45);
+}
+
+.ah-sell-hint {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: rgba(34, 197, 94, 0.06);
+    border: 1px solid rgba(34, 197, 94, 0.2);
+    border-radius: 12px;
+    padding: 0.65rem 1rem;
+    color: #86efac;
+    font-size: 0.85rem;
+    font-weight: 600;
+    line-height: 1.4;
+}
+
+.ah-sell-hint i {
+    width: 15px;
+    height: 15px;
+    flex-shrink: 0;
+}
+
+.ah-listings-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 0.85rem;
+}
+
+.ah-listing-card {
+    background: var(--card-grad);
+    border: 1px solid var(--card-border-strong);
+    border-radius: 18px;
+    padding: 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+    cursor: pointer;
+    transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease, filter 0.2s ease;
+    position: relative;
+    overflow: hidden;
+    box-shadow: var(--card-shadow);
+}
+
+.ah-listing-card:hover {
+    transform: translateY(-3px) scale(1.015);
+    filter: brightness(1.05);
+}
+
+.ah-listing-card-img-wrap {
+    width: 100%;
+    aspect-ratio: 1;
+    border-radius: 12px;
+    overflow: hidden;
+    background: rgba(0, 0, 0, 0.3);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+}
+
+.ah-listing-card-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+.ah-listing-card-img-fallback {
+    font-size: 3rem;
+    line-height: 1;
+}
+
+.ah-listing-rarity-dot {
+    position: absolute;
+    top: 6px;
+    right: 6px;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    box-shadow: 0 0 6px currentColor;
+}
+
+.ah-listing-card-name {
+    font-weight: 800;
+    font-size: 0.88rem;
+    color: var(--text-main);
+    line-height: 1.3;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.ah-listing-card-rarity {
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.ah-listing-card-cps {
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+}
+
+.ah-listing-card-cps i {
+    width: 12px;
+    height: 12px;
+}
+
+.ah-listing-card-price {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: auto;
+}
+
+.ah-listing-price-value {
+    font-size: 0.95rem;
+    font-weight: 900;
+    color: #facc15;
+}
+
+.ah-listing-price-delta {
+    font-size: 0.72rem;
+    font-weight: 700;
+    padding: 0.15rem 0.45rem;
+    border-radius: 999px;
+}
+
+.ah-listing-price-delta.up {
+    background: rgba(239, 68, 68, 0.12);
+    border: 1px solid rgba(239, 68, 68, 0.3);
+    color: #f87171;
+}
+
+.ah-listing-price-delta.down {
+    background: rgba(34, 197, 94, 0.12);
+    border: 1px solid rgba(34, 197, 94, 0.3);
+    color: #4ade80;
+}
+
+.ah-listing-price-delta.neutral {
+    background: rgba(163, 163, 163, 0.1);
+    border: 1px solid rgba(163, 163, 163, 0.2);
+    color: #a3a3a3;
+}
+
+.ah-listing-seller {
+    font-size: 0.72rem;
+    color: var(--text-muted);
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.ah-listing-seller i {
+    width: 11px;
+    height: 11px;
+    flex-shrink: 0;
+}
+
+.ah-sell-card {
+    background: var(--card-grad);
+    border: 1px solid var(--card-border-strong);
+    border-radius: 18px;
+    padding: 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+    box-shadow: var(--card-shadow);
+}
+
+.ah-sell-card-top {
+    display: flex;
+    align-items: center;
+    gap: 0.85rem;
+}
+
+.ah-sell-card-thumb {
+    width: 52px;
+    height: 52px;
+    border-radius: 10px;
+    overflow: hidden;
+    background: rgba(0, 0, 0, 0.3);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.ah-sell-card-thumb img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.ah-sell-card-thumb-fallback {
+    font-size: 1.6rem;
+}
+
+.ah-sell-card-meta {
+    flex: 1;
+    min-width: 0;
+}
+
+.ah-sell-card-name {
+    font-weight: 800;
+    font-size: 0.92rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.ah-sell-card-rarity {
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    margin-top: 0.1rem;
+}
+
+.ah-sell-card-ref {
+    font-size: 0.78rem;
+    color: var(--text-muted);
+    font-weight: 600;
+}
+
+.ah-sell-card-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.45rem;
+    padding: 0.6rem 1rem;
+    background: linear-gradient(135deg, rgba(34, 197, 94, 0.2), rgba(22, 163, 74, 0.14));
+    border: 1px solid rgba(34, 197, 94, 0.4);
+    border-radius: 10px;
+    color: #4ade80;
+    font-weight: 800;
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: filter 0.15s ease, transform 0.15s ease;
+    width: 100%;
+}
+
+.ah-sell-card-btn i {
+    width: 14px;
+    height: 14px;
+}
+
+.ah-sell-card-btn:hover {
+    filter: brightness(1.1);
+    transform: translateY(-1px);
+}
+
+.ah-my-listings-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.ah-my-listing-row {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    background: var(--card-grad);
+    border: 1px solid var(--card-border-strong);
+    border-radius: 16px;
+    padding: 0.9rem 1.1rem;
+    box-shadow: var(--card-shadow);
+    flex-wrap: wrap;
+}
+
+.ah-my-listing-thumb {
+    width: 44px;
+    height: 44px;
+    border-radius: 10px;
+    overflow: hidden;
+    background: rgba(0, 0, 0, 0.3);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    font-size: 1.4rem;
+}
+
+.ah-my-listing-thumb img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.ah-my-listing-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.ah-my-listing-name {
+    font-weight: 800;
+    font-size: 0.92rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.ah-my-listing-meta {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    margin-top: 0.15rem;
+    display: flex;
+    gap: 0.6rem;
+    flex-wrap: wrap;
+}
+
+.ah-my-listing-price {
+    font-size: 0.95rem;
+    font-weight: 900;
+    color: #facc15;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+.ah-my-listing-cancel {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.45rem 0.85rem;
+    background: rgba(239, 68, 68, 0.08);
+    border: 1px solid rgba(239, 68, 68, 0.3);
+    border-radius: 10px;
+    color: #f87171;
+    font-weight: 700;
+    font-size: 0.8rem;
+    cursor: pointer;
+    transition: filter 0.15s ease;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+.ah-my-listing-cancel i {
+    width: 13px;
+    height: 13px;
+}
+
+.ah-my-listing-cancel:hover {
+    filter: brightness(1.1);
+}
+
+.ah-empty-state {
+    grid-column: 1 / -1;
+    text-align: center;
+    padding: 3rem 1rem;
+    color: var(--text-muted);
+    font-size: 0.95rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.ah-empty-state-icon {
+    font-size: 2.5rem;
+    opacity: 0.5;
+}
+
+.ah-modal {
+    position: fixed;
+    inset: 0;
+    z-index: 12000;
+    display: grid;
+    place-items: center;
+    padding: 1rem;
+}
+
+.ah-modal.hidden {
+    display: none !important;
+}
+
+.ah-modal-overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.82);
+    backdrop-filter: blur(4px);
+}
+
+.ah-modal-card {
+    position: relative;
+    z-index: 1;
+    width: min(460px, 100%);
+    border-radius: 24px;
+    border: 1px solid rgba(34, 197, 94, 0.4);
+    background: linear-gradient(180deg, rgba(12, 28, 18, 0.98), rgba(8, 18, 12, 0.98));
+    box-shadow: 0 32px 64px rgba(0, 0, 0, 0.6), 0 0 60px rgba(34, 197, 94, 0.08);
+    padding: 1.75rem 1.5rem 1.5rem;
+    animation: ah-modal-pop 0.35s cubic-bezier(0.2, 0.9, 0.3, 1.2);
+    display: flex;
+    flex-direction: column;
+    gap: 1.1rem;
+}
+
+@keyframes ah-modal-pop {
+    0% { transform: scale(0.78); opacity: 0; }
+    100% { transform: scale(1); opacity: 1; }
+}
+
+.ah-modal-close {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    width: 30px;
+    height: 30px;
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: var(--text-muted);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: filter 0.15s ease;
+}
+
+.ah-modal-close:hover { filter: brightness(1.3); }
+.ah-modal-close i { width: 14px; height: 14px; }
+
+.ah-modal-header {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.ah-modal-card-img {
+    width: 72px;
+    height: 72px;
+    border-radius: 12px;
+    object-fit: cover;
+    background: rgba(0, 0, 0, 0.3);
+    flex-shrink: 0;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.ah-modal-card-name {
+    font-size: 1.1rem;
+    font-weight: 900;
+    margin-bottom: 0.25rem;
+}
+
+.ah-modal-card-rarity {
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 0.25rem;
+}
+
+.ah-modal-card-cps {
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: var(--text-muted);
+}
+
+.ah-modal-price-block {
+    background: rgba(0, 0, 0, 0.25);
+    border: 1px solid rgba(255, 255, 255, 0.07);
+    border-radius: 14px;
+    padding: 1rem 1.1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+}
+
+.ah-modal-price-label {
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--text-muted);
+}
+
+.ah-modal-price-value {
+    font-size: 1.6rem;
+    font-weight: 900;
+    color: #facc15;
+}
+
+.ah-modal-price-ref {
+    font-size: 0.78rem;
+    color: var(--text-muted);
+}
+
+.ah-modal-seller {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.85rem;
+    color: var(--text-muted);
+}
+
+.ah-modal-seller i { width: 14px; height: 14px; }
+.ah-modal-seller strong { color: var(--text-main); }
+
+.ah-modal-confirm-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.55rem;
+    padding: 0.9rem 1rem;
+    background: linear-gradient(135deg, #22c55e, #16a34a);
+    border: none;
+    border-bottom: 3px solid #14532d;
+    border-radius: 14px;
+    color: white;
+    font-size: 1rem;
+    font-weight: 900;
+    cursor: pointer;
+    box-shadow: 0 8px 20px rgba(34, 197, 94, 0.3);
+    transition: filter 0.15s ease, transform 0.1s ease;
+}
+
+.ah-modal-confirm-btn.ah-sell-btn {
+    background: linear-gradient(135deg, #f97316, #ea580c);
+    border-bottom-color: #7c2d12;
+    box-shadow: 0 8px 20px rgba(249, 115, 22, 0.3);
+}
+
+.ah-modal-confirm-btn:hover {
+    filter: brightness(1.08);
+    transform: translateY(-1px);
+}
+
+.ah-modal-confirm-btn:active {
+    transform: translateY(1px);
+    border-bottom-width: 0;
+}
+
+.ah-modal-confirm-btn i { width: 17px; height: 17px; }
+
+.ah-price-range-wrap {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+}
+
+.ah-price-bounds {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: var(--text-muted);
+}
+
+.ah-price-slider {
+    width: 100%;
+    -webkit-appearance: none;
+    appearance: none;
+    height: 6px;
+    border-radius: 999px;
+    background: linear-gradient(to right, rgba(34, 197, 94, 0.3), rgba(34, 197, 94, 0.6), rgba(249, 115, 22, 0.6));
+    outline: none;
+    cursor: pointer;
+}
+
+.ah-price-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: #fff;
+    border: 2px solid #22c55e;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+    cursor: pointer;
+    transition: border-color 0.15s ease, transform 0.15s ease;
+}
+
+.ah-price-slider::-webkit-slider-thumb:hover {
+    transform: scale(1.15);
+    border-color: #4ade80;
+}
+
+.ah-price-ticks {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.68rem;
+    color: var(--text-muted);
+    font-weight: 600;
+}
+
+.ah-price-display {
+    display: flex;
+    align-items: baseline;
+    gap: 0.5rem;
+    margin-top: 0.2rem;
+}
+
+.ah-price-display-label {
+    font-size: 0.78rem;
+    color: var(--text-muted);
+    font-weight: 600;
+}
+
+.ah-price-display-value {
+    font-size: 1.5rem;
+    font-weight: 900;
+    color: #facc15;
+}
+
+@media (max-width: 640px) {
+    .ah-hero {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .ah-tabs {
+        flex-wrap: wrap;
+    }
+
+    .ah-tab {
+        font-size: 0.8rem;
+        padding: 0.55rem 0.7rem;
+    }
+
+    .ah-search-bar {
+        flex-direction: column;
+    }
+
+    .ah-listings-grid {
+        grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    }
+
+    .ah-my-listing-row {
+        gap: 0.75rem;
+    }
+}

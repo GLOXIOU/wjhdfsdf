@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BrainrotStars - Passe de combat</title>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link rel="stylesheet" href="../index/style.css">
+    <link rel="stylesheet" href="battlepass.css">
+    <link rel="icon" type="image/x-icon" href="https://raw.githubusercontent.com/schoolllex/images/refs/heads/main/BrainrotStar/favicon.ico">
+</head>
+<body>
+    <div class="background-glow">
+        <div class="glow-1"></div>
+        <div class="glow-2"></div>
+    </div>
+
+    <div class="container">
+        <header class="navbar">
+            <div class="logo">
+                <a href="../index/index.html" class="nav-link">
+                    <img src="https://raw.githubusercontent.com/schoolllex/images/refs/heads/main/BrainrotStar/BrainrotStar_logo_fc.png" alt="Brainrot Star" class="logo-image">
+                </a>
+            </div>
+            <button class="nav-toggle" type="button" aria-label="Ouvrir le menu" aria-expanded="false">
+                <i data-lucide="menu"></i>
+            </button>
+            <div class="nav-buttons">
+                <a href="../index/index.html" class="btn-nav nav-link">
+                  <i data-lucide="home"></i>
+                  <span>Accueil</span>
+                </a>
+                <a href="../shop/shop.html" class="btn-nav shop nav-link">
+                    <i data-lucide="store"></i>
+                    <span>Boutique</span>
+                </a>
+                <a href="../collection/collection.html" class="btn-nav collection nav-link">
+                    <i data-lucide="library"></i>
+                    <span>Collection</span>
+                </a>
+                <a href="../ranking/ranking.html" class="btn-nav ranking nav-link">
+                    <i data-lucide="trophy"></i>
+                    <span>Classement</span>
+                </a>
+                <a href="../friends/friends.html" class="btn-nav profile nav-link">
+                    <i data-lucide="user"></i>
+                    <span>Profil</span>
+                </a>
+                <button type="button" class="btn-nav profile nav-link">
+                  <i data-lucide="user"></i>
+                  <span>Profil</span>
+                </button>
+</div>
+        </header>
+
+        <main class="battlepass-content">
+            <section class="battlepass-hero">
+                <div class="battlepass-hero-title">
+                    <span class="hero-emoji">🎟️</span>
+                    <h1>Passe de combat</h1>
+                </div>
+                <p>Progresse dans les niveaux pour débloquer des récompenses exclusives.</p>
+            </section>
+
+            <section class="battlepass-lock-card" id="bp-lock-card">
+                <div class="lock-head">
+                    <i data-lucide="lock-keyhole"></i>
+                    <h2>Débloquer le Passe de combat</h2>
+                </div>
+                <p class="lock-subtitle">
+                    Tu dois acheter l'accès pour commencer à progresser et récupérer les récompenses.
+                </p>
+                <div class="lock-price">Prix d'accès : <strong>100 000 💰</strong></div>
+                <button id="bp-buy-btn" class="bp-buy-btn" type="button">
+                    Acheter le Passe de combat
+                </button>
+                <p id="bp-lock-feedback" class="bp-lock-feedback" aria-live="polite"></p>
+            </section>
+
+            <section class="battlepass-stats bp-locked" id="bp-stats">
+                <article class="bp-stat-card">
+                    <div class="bp-stat-head">
+                        <i data-lucide="bar-chart-3"></i>
+                        <span>Niveau actuel</span>
+                    </div>
+                    <strong id="bp-level">1</strong>
+                </article>
+
+                <article class="bp-stat-card">
+                    <div class="bp-stat-head">
+                        <i data-lucide="sparkles"></i>
+                        <span>XP du passe</span>
+                    </div>
+                    <strong id="bp-xp">0 / 1000</strong>
+                </article>
+            </section>
+
+            <section class="battlepass-track-card bp-locked" id="bp-track-card">
+                <div class="track-head">
+                    <h2>Route des récompenses</h2>
+                    <span class="track-season">Saison 1</span>
+                </div>
+                <div class="track-list" id="bp-track-list"></div>
+            </section>
+        </main>
+    </div>
+
+    <div id="bp-success-overlay" class="bp-success-overlay hidden" role="dialog" aria-modal="true" aria-label="Passe de combat débloqué">
+        <div class="bp-success-card">
+            <div class="bp-success-icon">🎉</div>
+            <h2>Passe de combat débloqué !</h2>
+            <p>Bienvenue dans la saison 1, tes récompenses sont maintenant actives.</p>
+            <button id="bp-success-close" class="bp-buy-btn bp-success-close" type="button">Continuer</button>
+        </div>
+    </div>
+
+    <div id="global-loader" class="global-loader hidden" aria-hidden="true">
+        <div class="global-loader-spinner"></div>
+    </div>
+
+    <script src="../assets/config.js"></script>
+  <script src="../assets/playweb-analytics.js"></script>
+
+    <script src="../assets/shared-nav.js"></script>
+    <script src="../assets/mobile-nav.js"></script>
+    <script src="../assets/rebirth-reveal.js"></script>
+    <script src="../assets/loading.js"></script>
+    <script src="../assets/auth-gate.js"></script>
+    <script src="../assets/notif.js"></script>
+    <script src="../assets/game-notif.js"></script>
+    <script src="battlepass.js"></script>
+</body>
+</html>

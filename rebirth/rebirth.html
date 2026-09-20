@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BrainrotStars - Rebirth</title>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link rel="stylesheet" href="../index/style.css">
+    <link rel="stylesheet" href="rebirth.css">
+    <link rel="icon" type="image/x-icon" href="https://raw.githubusercontent.com/schoolllex/images/refs/heads/main/BrainrotStar/favicon.ico">
+</head>
+<body>
+    <div class="background-glow">
+        <div class="glow-1"></div>
+        <div class="glow-2"></div>
+        <div class="glow-rebirth"></div>
+    </div>
+
+    <div class="container">
+        <header class="navbar">
+            <div class="logo">
+                <a href="../index/index.html" class="nav-link">
+                    <img src="https://raw.githubusercontent.com/schoolllex/images/refs/heads/main/BrainrotStar/BrainrotStar_logo_fc.png" alt="Brainrot Star" class="logo-image">
+                </a>
+            </div>
+            <button class="nav-toggle" type="button" aria-label="Ouvrir le menu" aria-expanded="false">
+                <i data-lucide="menu"></i>
+            </button>
+            <div class="nav-buttons">
+                <a href="../index/index.html" class="btn-nav nav-link">
+                  <i data-lucide="home"></i>
+                  <span>Accueil</span>
+                </a>
+                <a href="../shop/shop.html" class="btn-nav shop nav-link">
+                    <i data-lucide="store"></i>
+                    <span>Boutique</span>
+                </a>
+                <a href="../collection/collection.html" class="btn-nav collection nav-link">
+                    <i data-lucide="library"></i>
+                    <span>Collection</span>
+                </a>
+                <a href="../ranking/ranking.html" class="btn-nav ranking nav-link">
+                    <i data-lucide="trophy"></i>
+                    <span>Classement</span>
+                </a>
+                <a href="../friends/friends.html" class="btn-nav profile nav-link">
+                    <i data-lucide="user"></i>
+                    <span>Profil</span>
+                </a>
+                <button type="button" class="btn-nav profile nav-link">
+                  <i data-lucide="user"></i>
+                  <span>Profil</span>
+                </button>
+</div>
+        </header>
+
+        <main class="rebirth-content">
+
+            <section class="rebirth-hero">
+                <div class="rebirth-hero-icon">
+                    <i data-lucide="refresh-ccw"></i>
+                </div>
+                <div class="rebirth-hero-text">
+                    <h1>Rebirth</h1>
+                    <p>Réinitialise ta progression pour débloquer des bonus permanents qui s'accumulent à chaque renaissance.</p>
+                </div>
+                <div class="rebirth-wallet-badge">
+                    <i data-lucide="wallet"></i>
+                    <span id="wallet-value">0 💰</span>
+                </div>
+            </section>
+
+            <section class="rebirth-status-card">
+                <div class="rebirth-status-left">
+                    <div class="rebirth-level-badge" id="rebirth-level-badge">
+                        <span class="rebirth-level-icon" id="rebirth-level-icon">🌱</span>
+                        <div>
+                            <div class="rebirth-level-label">Niveau actuel</div>
+                            <div class="rebirth-level-name" id="rebirth-level-name">Éveillé</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="rebirth-status-right">
+                    <div class="rebirth-stat">
+                        <span class="rebirth-stat-label">Rebirths effectués</span>
+                        <span class="rebirth-stat-value purple" id="rebirth-count">0</span>
+                    </div>
+                    <div class="rebirth-stat">
+                        <span class="rebirth-stat-label">Bonus CPS total</span>
+                        <span class="rebirth-stat-value green" id="rebirth-cps-bonus">+0%</span>
+                    </div>
+                </div>
+            </section>
+
+            <section class="rebirth-next-card" id="rebirth-next-card">
+                <div class="rebirth-next-header">
+                    <div class="rebirth-next-title">
+                        <i data-lucide="sparkles"></i>
+                        <span>Prochain Rebirth disponible</span>
+                    </div>
+                    <div class="rebirth-next-cost" id="rebirth-next-cost">
+                        <i data-lucide="coins"></i>
+                        <span id="rebirth-cost-value">100 000 💰</span>
+                    </div>
+                </div>
+
+                <div class="rebirth-rewards-preview">
+                    <div class="rebirth-rewards-title">Récompenses à débloquer</div>
+                    <div class="rebirth-rewards-grid" id="rebirth-rewards-preview"></div>
+                </div>
+
+                <button id="rebirth-btn" class="rebirth-do-btn" type="button">
+                    <i data-lucide="refresh-ccw"></i>
+                    <span>Effectuer le Rebirth</span>
+                </button>
+
+                <p class="rebirth-warning">⚠️ Ta progression (argent, cartes) sera réinitialisée. Les bonus sont permanents.</p>
+            </section>
+
+            <section class="rebirth-tiers-section">
+                <div class="section-title-row">
+                    <h2>Tous les paliers</h2>
+                    <span class="section-badge" id="tiers-done-count">0 / 8 complétés</span>
+                </div>
+                <div class="rebirth-tiers-list" id="rebirth-tiers-list"></div>
+            </section>
+
+        </main>
+    </div>
+
+    <div id="rebirth-confirm-modal" class="rebirth-modal hidden" role="dialog" aria-modal="true" aria-labelledby="rebirth-modal-title">
+        <div class="rebirth-modal-overlay" id="rebirth-modal-overlay"></div>
+        <div class="rebirth-modal-card">
+            <div class="rebirth-modal-icon">🔄</div>
+            <h3 id="rebirth-modal-title" class="rebirth-modal-title">Confirmer le Rebirth</h3>
+            <p class="rebirth-modal-desc">Tu vas passer au niveau <strong id="rebirth-modal-next-level"></strong>.</p>
+            <div class="rebirth-modal-warning">
+                ⚠️ Toute ta progression sera réinitialisée : argent, caisses en inventaire, cartes obtenues. Seuls les bonus Rebirth sont conservés.
+            </div>
+            <div class="rebirth-modal-rewards">
+                <div class="rebirth-modal-rewards-title">Tu vas recevoir :</div>
+                <div id="rebirth-modal-rewards-list" class="rebirth-modal-rewards-list"></div>
+            </div>
+            <div class="rebirth-modal-actions">
+                <button id="rebirth-modal-cancel" class="rebirth-modal-btn-cancel" type="button">Annuler</button>
+                <button id="rebirth-modal-confirm" class="rebirth-modal-btn-confirm" type="button">
+                    <i data-lucide="refresh-ccw"></i>
+                    Confirmer le Rebirth
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div id="rebirth-success-overlay" class="rebirth-success-overlay hidden">
+        <div class="rebirth-success-content">
+            <div class="rebirth-success-burst"></div>
+            <div class="rebirth-success-icon" id="success-icon">🌟</div>
+            <h2 class="rebirth-success-title" id="success-title">Rebirth accompli !</h2>
+            <p class="rebirth-success-sub" id="success-sub">Tu es maintenant niveau <strong></strong></p>
+            <div class="rebirth-success-rewards" id="success-rewards"></div>
+            <button id="rebirth-success-close" class="rebirth-success-close-btn" type="button">Continuer</button>
+        </div>
+    </div>
+
+    <div id="global-loader" class="global-loader hidden" aria-hidden="true">
+        <div class="global-loader-spinner"></div>
+    </div>
+
+    <script src="../assets/config.js"></script>
+  <script src="../assets/playweb-analytics.js"></script>
+
+    <script src="../assets/shared-nav.js"></script>
+    <script src="../assets/mobile-nav.js"></script>
+    <script src="../assets/rebirth-reveal.js"></script>
+    <script src="../assets/loading.js"></script>
+    <script src="../assets/auth-gate.js"></script>
+    <script src="../assets/notif.js"></script>
+    <script src="../assets/game-notif.js"></script>
+    <script src="rebirth.js"></script>
+</body>
+</html>

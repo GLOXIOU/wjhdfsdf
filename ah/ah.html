@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BrainrotStars - Marché des Brainrot</title>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link rel="stylesheet" href="../index/style.css">
+    <link rel="stylesheet" href="ah.css">
+    <link rel="icon" type="image/x-icon" href="https://raw.githubusercontent.com/schoolllex/images/refs/heads/main/BrainrotStar/favicon.ico">
+</head>
+<body>
+    <div class="background-glow">
+        <div class="glow-1"></div>
+        <div class="glow-2"></div>
+        <div class="glow-ah"></div>
+    </div>
+
+    <div class="container">
+        <header class="navbar">
+            <div class="logo">
+                <a href="../index/index.html" class="nav-link">
+                    <img src="https://raw.githubusercontent.com/schoolllex/images/refs/heads/main/BrainrotStar/BrainrotStar_logo_fc.png" alt="Brainrot Star" class="logo-image">
+                </a>
+            </div>
+            <button class="nav-toggle" type="button" aria-label="Ouvrir le menu" aria-expanded="false">
+                <i data-lucide="menu"></i>
+            </button>
+            <div class="nav-buttons">
+                <a href="../index/index.html" class="btn-nav nav-link">
+                  <i data-lucide="home"></i>
+                  <span>Accueil</span>
+                </a>
+                <a href="../shop/shop.html" class="btn-nav shop nav-link">
+                    <i data-lucide="store"></i>
+                    <span>Boutique</span>
+                </a>
+                <a href="../collection/collection.html" class="btn-nav collection nav-link">
+                    <i data-lucide="library"></i>
+                    <span>Collection</span>
+                </a>
+                <a href="../ranking/ranking.html" class="btn-nav ranking nav-link">
+                    <i data-lucide="trophy"></i>
+                    <span>Classement</span>
+                </a>
+                <a href="../friends/friends.html" class="btn-nav profile nav-link">
+                    <i data-lucide="user"></i>
+                    <span>Profil</span>
+                </a>
+                <button type="button" class="btn-nav profile nav-link">
+                  <i data-lucide="user"></i>
+                  <span>Profil</span>
+                </button>
+</div>
+        </header>
+
+        <main class="ah-content">
+
+            <section class="ah-hero">
+                <div class="ah-hero-left">
+                    <div class="ah-hero-icon">
+                        <span>🛒</span>
+                    </div>
+                    <div>
+                        <h1>Marché des Brainrot</h1>
+                        <p>Achetez et vendez des cartes entre joueurs en temps réel.</p>
+                    </div>
+                </div>
+                <div class="ah-wallet-badge">
+                    <i data-lucide="wallet"></i>
+                    <span id="ah-wallet">0 💰</span>
+                </div>
+            </section>
+
+            <div class="ah-tabs">
+                <button class="ah-tab active" data-tab="buy" type="button">
+                    <i data-lucide="shopping-bag"></i>
+                    Acheter
+                </button>
+                <button class="ah-tab" data-tab="sell" type="button">
+                    <i data-lucide="tag"></i>
+                    Vendre
+                </button>
+                <button class="ah-tab" data-tab="my-listings" type="button">
+                    <i data-lucide="layout-list"></i>
+                    Mes annonces
+                    <span class="ah-tab-badge hidden" id="my-listings-count">0</span>
+                </button>
+            </div>
+
+            <div id="tab-buy" class="ah-tab-panel active">
+                <div class="ah-search-bar">
+                    <div class="ah-search-input-wrap">
+                        <i data-lucide="search"></i>
+                        <input id="buy-search" type="text" placeholder="Rechercher une carte..." autocomplete="off">
+                    </div>
+                    <div class="ah-filters">
+                        <select id="buy-filter-rarity">
+                            <option value="all">Toutes raretés</option>
+                        </select>
+                        <select id="buy-sort">
+                            <option value="price-asc">Prix croissant</option>
+                            <option value="price-desc">Prix décroissant</option>
+                            <option value="cps-desc">Meilleur CPS</option>
+                            <option value="rarity-desc">Rareté max</option>
+                        </select>
+                    </div>
+                </div>
+                <div id="buy-listings-grid" class="ah-listings-grid"></div>
+            </div>
+
+            <div id="tab-sell" class="ah-tab-panel hidden">
+                <div class="ah-search-bar">
+                    <div class="ah-search-input-wrap">
+                        <i data-lucide="search"></i>
+                        <input id="sell-search" type="text" placeholder="Chercher dans votre collection..." autocomplete="off">
+                    </div>
+                    <div class="ah-filters">
+                        <select id="sell-filter-rarity">
+                            <option value="all">Toutes raretés</option>
+                        </select>
+                    </div>
+                </div>
+                <p class="ah-sell-hint"><i data-lucide="info"></i> Vous pouvez fixer un prix entre <strong>−20%</strong> et <strong>+20%</strong> du prix de référence.</p>
+                <div id="sell-cards-grid" class="ah-listings-grid"></div>
+            </div>
+
+            <div id="tab-my-listings" class="ah-tab-panel hidden">
+                <div id="my-listings-list" class="ah-my-listings-list"></div>
+            </div>
+
+        </main>
+    </div>
+
+    <div id="buy-modal" class="ah-modal hidden" role="dialog" aria-modal="true">
+        <div class="ah-modal-overlay" id="buy-modal-overlay"></div>
+        <div class="ah-modal-card">
+            <button class="ah-modal-close" id="buy-modal-close" type="button"><i data-lucide="x"></i></button>
+            <div class="ah-modal-header">
+                <img id="buy-modal-img" class="ah-modal-card-img" src="" alt="">
+                <div class="ah-modal-card-info">
+                    <div id="buy-modal-name" class="ah-modal-card-name"></div>
+                    <div id="buy-modal-rarity" class="ah-modal-card-rarity"></div>
+                    <div id="buy-modal-cps" class="ah-modal-card-cps"></div>
+                </div>
+            </div>
+            <div class="ah-modal-price-block">
+                <div class="ah-modal-price-label">Prix de vente</div>
+                <div id="buy-modal-price" class="ah-modal-price-value"></div>
+                <div id="buy-modal-ref" class="ah-modal-price-ref"></div>
+            </div>
+            <div class="ah-modal-seller">
+                <i data-lucide="user"></i>
+                <span>Vendu par <strong id="buy-modal-seller"></strong></span>
+            </div>
+            <button id="buy-modal-confirm" class="ah-modal-confirm-btn" type="button">
+                <i data-lucide="shopping-bag"></i>
+                Acheter
+            </button>
+        </div>
+    </div>
+
+    <div id="sell-modal" class="ah-modal hidden" role="dialog" aria-modal="true">
+        <div class="ah-modal-overlay" id="sell-modal-overlay"></div>
+        <div class="ah-modal-card">
+            <button class="ah-modal-close" id="sell-modal-close" type="button"><i data-lucide="x"></i></button>
+            <div class="ah-modal-header">
+                <img id="sell-modal-img" class="ah-modal-card-img" src="" alt="">
+                <div class="ah-modal-card-info">
+                    <div id="sell-modal-name" class="ah-modal-card-name"></div>
+                    <div id="sell-modal-rarity" class="ah-modal-card-rarity"></div>
+                    <div id="sell-modal-cps" class="ah-modal-card-cps"></div>
+                </div>
+            </div>
+            <div class="ah-modal-price-block">
+                <div class="ah-modal-price-label">Définir votre prix</div>
+                <div class="ah-price-range-wrap">
+                    <div class="ah-price-bounds">
+                        <span id="sell-price-min"></span>
+                        <span id="sell-price-max"></span>
+                    </div>
+                    <input id="sell-price-slider" class="ah-price-slider" type="range" min="0" max="100" value="50" step="1">
+                    <div class="ah-price-ticks">
+                        <span>−20%</span>
+                        <span>Prix ref.</span>
+                        <span>+20%</span>
+                    </div>
+                </div>
+                <div class="ah-price-display">
+                    <span class="ah-price-display-label">Votre prix :</span>
+                    <span id="sell-price-display" class="ah-price-display-value"></span>
+                </div>
+                <div id="sell-ref-price" class="ah-modal-price-ref"></div>
+            </div>
+            <button id="sell-modal-confirm" class="ah-modal-confirm-btn ah-sell-btn" type="button">
+                <i data-lucide="tag"></i>
+                Mettre en vente
+            </button>
+        </div>
+    </div>
+
+    <div id="global-loader" class="global-loader hidden" aria-hidden="true">
+        <div class="global-loader-spinner"></div>
+    </div>
+
+    <script src="../assets/config.js"></script>
+  <script src="../assets/playweb-analytics.js"></script>
+
+    <script src="../assets/shared-nav.js"></script>
+    <script src="../assets/mobile-nav.js"></script>
+    <script src="../assets/loading.js"></script>
+    <script src="../assets/auth-gate.js"></script>
+    <script src="../assets/notif.js"></script>
+    <script src="../assets/game-notif.js"></script>
+    <script src="ah.js"></script>
+</body>
+</html>

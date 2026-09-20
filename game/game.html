@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>BrainrotStars — Combats</title>
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <link rel="stylesheet" href="game.css" />
+  <link rel="icon" type="image/x-icon" href="https://raw.githubusercontent.com/schoolllex/images/refs/heads/main/BrainrotStar/favicon.ico">
+</head>
+<body>
+
+  <div class="background-glow">
+    <div class="glow-1"></div>
+    <div class="glow-2"></div>
+  </div>
+
+  <div class="container">
+
+    <header class="navbar">
+      <div class="logo">
+        <a href="../index/index.html" class="nav-link">
+          <img src="https://raw.githubusercontent.com/schoolllex/images/refs/heads/main/BrainrotStar/BrainrotStar_logo_fc.png" alt="Brainrot Star" class="logo-image" />
+        </a>
+      </div>
+      <button class="nav-toggle" type="button" aria-label="Ouvrir le menu" aria-expanded="false">
+        <i data-lucide="menu"></i>
+      </button>
+      <div class="nav-buttons">
+        <a href="../index/index.html" class="btn-nav nav-link">
+          <i data-lucide="home"></i>
+          <span>Accueil</span>
+        </a>
+        <a href="../shop/shop.html" class="btn-nav shop nav-link">
+          <i data-lucide="store"></i>
+          <span>Boutique</span>
+        </a>
+        <a href="../collection/collection.html" class="btn-nav collection nav-link">
+          <i data-lucide="library"></i>
+          <span>Collection</span>
+        </a>
+        <a href="../ranking/ranking.html" class="btn-nav ranking nav-link">
+          <i data-lucide="trophy"></i>
+          <span>Classement</span>
+        </a>
+        <a href="../friends/friends.html" class="btn-nav profile nav-link">
+          <i data-lucide="user"></i>
+          <span>Profil</span>
+        </a>
+      </div>
+    </header>
+
+    <main>
+
+      <section id="lobby">
+        <div class="lobby-grid">
+          <div class="btn-card lobby-input-wrap" style="display:none;">
+            <input id="room" placeholder="ID de la salle" class="lobby-input" autocomplete="off" />
+          </div>
+          <button id="join" class="btn-play lobby-btn" style="display:none;">
+            <i data-lucide="swords"></i>
+            <span>Rejoindre</span>
+            <div class="shine"></div>
+          </button>
+          <button id="matchmaking-btn" class="btn-play lobby-btn" style="gap:8px;">
+            <i data-lucide="zap"></i>
+            <span>Matchmaking</span>
+            <div class="shine"></div>
+          </button>
+          <button id="invite-btn" class="btn-card lobby-invite-btn" type="button">
+            <i data-lucide="user-plus"></i>
+            <span>Inviter un ami</span>
+          </button>
+        </div>
+
+        <div class="game-tuto">
+          <div class="tuto-header">
+            <span class="tuto-badge">Comment jouer</span>
+          </div>
+          <div class="tuto-steps">
+            <div class="tuto-step">
+              <div class="tuto-step-num">1</div>
+              <div class="tuto-step-body">
+                <div class="tuto-step-title">— Construis ton deck</div>
+                <div class="tuto-step-cards">
+                  <div class="skeleton-card"></div>
+                  <div class="skeleton-card"></div>
+                  <div class="skeleton-card"></div>
+                  <div class="skeleton-card"></div>
+                  <div class="skeleton-card"></div>
+                  <div class="skeleton-card"></div>
+                  <div class="skeleton-card sk-faded"></div>
+                  <div class="skeleton-card sk-faded"></div>
+                  <div class="skeleton-card sk-faded"></div>
+                  <div class="skeleton-card sk-faded"></div>
+                </div>
+                <p class="tuto-step-desc">Choisis <strong>10 cartes</strong> parmi ta collection de 40+ Brainrots. Chaque carte a un coût en mana, des PV et des dégâts.</p>
+              </div>
+            </div>
+
+            <div class="tuto-step">
+              <div class="tuto-step-num">2</div>
+              <div class="tuto-step-body">
+                <div class="tuto-step-title">— Pose tes unités sur l'arène</div>
+                <div class="tuto-arena-preview">
+                  <div class="tuto-arena-bar tuto-arena-top">
+                    <div class="skeleton-hp"></div>
+                  </div>
+                  <div class="tuto-arena-field">
+                    <div class="skeleton-unit sk-enemy tuto-unit-anim tuto-unit-left"></div>
+                    <div class="tuto-vs">⚔️</div>
+                    <div class="skeleton-unit sk-ally tuto-unit-anim tuto-unit-right"></div>
+                  </div>
+                  <div class="tuto-arena-bar tuto-arena-bot">
+                    <div class="skeleton-hp"></div>
+                  </div>
+                </div>
+                <p class="tuto-step-desc">Pose tes cartes sur l'arène en les glissant-déposant. Tes unités avancent et attaquent automatiquement — comme dans Clash Royale.</p>
+              </div>
+            </div>
+
+            <div class="tuto-step">
+              <div class="tuto-step-num">3</div>
+              <div class="tuto-step-body">
+                <div class="tuto-step-title">— Gère ton mana pour gagner</div>
+                <div class="tuto-mana-preview">
+                  <div class="tuto-mana-pip filled"></div>
+                  <div class="tuto-mana-pip filled"></div>
+                  <div class="tuto-mana-pip filled"></div>
+                  <div class="tuto-mana-pip filled"></div>
+                  <div class="tuto-mana-pip filled"></div>
+                  <div class="tuto-mana-pip"></div>
+                  <div class="tuto-mana-pip"></div>
+                  <div class="tuto-mana-pip"></div>
+                  <div class="tuto-mana-pip"></div>
+                  <div class="tuto-mana-pip"></div>
+                </div>
+                <p class="tuto-step-desc">Le mana se recharge automatiquement. Gérer ton mana intelligemment est la clé de la victoire. Détruis les tours de l'adversaire pour gagner !</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="matchmaking-waiting" style="display:none; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.7); z-index:9999; align-items:center; justify-content:center;">
+        <div style="background:var(--bg-secondary); border-radius:16px; padding:48px; text-align:center; max-width:500px; box-shadow:0 20px 60px rgba(0,0,0,0.5);">
+          <div style="font-size:3rem; margin-bottom:24px; animation:bounce 2s infinite;">⚡</div>
+          <h2 id="matchmaking-title" style="margin-bottom:16px; font-size:1.8rem; font-weight:900;">Recherche d'adversaire</h2>
+          <p id="matchmaking-message" style="color:var(--text-muted); margin-bottom:32px; line-height:1.6; font-size:1.05rem;">En attente d'un adversaire de ton niveau...</p>
+          
+          <div style="margin-bottom:32px;">
+            <div style="display:flex; align-items:center; justify-content:center; gap:12px; margin-bottom:20px;">
+              <div style="width:12px; height:12px; background:#10b981; border-radius:50%; animation:pulse 2s infinite;"></div>
+              <span style="font-size:0.95rem; color:var(--text-muted);">Temps d'attente: <span id="matchmaking-timer">0s</span></span>
+            </div>
+            
+            <div style="display:flex; justify-content:center; gap:8px; margin-bottom:20px;">
+              <div style="width:8px; height:8px; background:#f97316; border-radius:50%; animation:matchmakingBounce 1.4s infinite 0ms;"></div>
+              <div style="width:8px; height:8px; background:#f97316; border-radius:50%; animation:matchmakingBounce 1.4s infinite 140ms;"></div>
+              <div style="width:8px; height:8px; background:#f97316; border-radius:50%; animation:matchmakingBounce 1.4s infinite 280ms;"></div>
+            </div>
+
+            <div id="matchmaking-stats" style="display:flex; gap:12px; justify-content:center; font-size:0.9rem; color:var(--text-muted);">
+              <span>👥 En queue: <span id="queue-count">0</span></span>
+              <span style="color:rgba(255,255,255,0.2);">•</span>
+              <span>⚔️ Matchs actifs: <span id="active-matches">0</span></span>
+            </div>
+          </div>
+
+          <div style="display:flex; justify-content:center;">
+            <button id="cancel-matchmaking-btn" class="btn-card" style="flex-direction:row; gap:8px; justify-content:center; padding:1rem 1.5rem;">
+              <i data-lucide="x" style="width:18px;height:18px;"></i>
+              <span style="font-weight:800;">Annuler la recherche</span>
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <style>
+        @keyframes bounce {
+          0%, 100% { transform: translateY(0); }
+          50% { transform: translateY(-20px); }
+        }
+        @keyframes pulse {
+          0%, 100% { opacity: 1; }
+          50% { opacity: 0.5; }
+        }
+        @keyframes matchmakingBounce {
+          0%, 100% { transform: translateY(0); opacity: 0.6; }
+          50% { transform: translateY(-12px); opacity: 1; }
+        }
+      </style>
+
+      <section id="deck-selector" style="display:none">
+        <div class="stat-row" style="justify-content:center; margin-bottom:20px;">
+          <div class="stat-info">
+            <div class="icon-wrapper purple"><i data-lucide="library"></i></div>
+            <span style="font-size:1.05rem; font-weight:900;">Sélectionne exactement 10 cartes pour ton deck</span>
+          </div>
+        </div>
+        <div id="deck-list" style="display:grid; grid-template-columns:repeat(auto-fill, minmax(130px, 1fr)); gap:12px; margin-bottom:20px;"></div>
+        <div style="display:flex; flex-direction:column; gap:10px;">
+          <div style="display:flex; gap:10px; flex-wrap:wrap; justify-content:center;">
+            <button id="use-saved-deck" class="btn-card" type="button" style="flex-direction:row; gap:8px; justify-content:center; padding:0.85rem 1.25rem; flex:1; min-width:200px;">
+              <i data-lucide="star" style="width:18px;height:18px;color:#facc15;"></i>
+              <span style="font-weight:800;">Utiliser mon deck</span>
+              <span id="saved-deck-count" style="font-size:0.78rem; color:var(--text-muted); font-weight:600;"></span>
+            </button>
+            <button id="reset-saved-deck" class="btn-card" type="button" style="flex-direction:row; gap:8px; justify-content:center; padding:0.85rem 1.25rem;">
+              <i data-lucide="trash-2" style="width:18px;height:18px;color:#ef4444;"></i>
+              <span style="font-weight:800;">Réinitialiser</span>
+            </button>
+          </div>
+          <button id="confirm-deck" class="btn-play" disabled>
+            <i data-lucide="swords" style="margin-right:8px; width:20px; height:20px;"></i>
+            Commencer le combat ⚔️ (0/10)
+            <div class="shine"></div>
+          </button>
+        </div>
+      </section>
+
+      <section id="invitation-modal" style="display:none; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.7); z-index:9999; align-items:center; justify-content:center;">
+        <div style="background:var(--bg-secondary); border-radius:16px; padding:32px; text-align:center; max-width:400px; box-shadow:0 20px 60px rgba(0,0,0,0.5);">
+          <div style="font-size:2rem; margin-bottom:16px;">🎮</div>
+          <h2 id="invitation-title" style="margin-bottom:12px; font-size:1.5rem; font-weight:900;">En attente...</h2>
+          <p id="invitation-message" style="color:var(--text-muted); margin-bottom:24px; line-height:1.6;"></p>
+          <div id="invitation-buttons" style="display:flex; gap:12px; justify-content:center;">
+            <button id="accept-invitation-btn" class="btn-play" style="display:none;">
+              ✅ Accepter
+            </button>
+            <button id="reject-invitation-btn" class="btn-card" style="display:none;">
+              ❌ Refuser
+            </button>
+            <button id="waiting-btn" class="btn-card" style="display:flex; align-items:center; gap:8px; opacity:0.7;" disabled>
+              <span style="display:inline-block; animation:spin 1s linear infinite;">⏳</span>
+              <span>En attente de l'adversaire...</span>
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <section id="game" style="display:none">
+        <div id="topbar" style="display:flex; justify-content:space-between; gap:12px; margin-bottom:12px; align-items:center;">
+          <div id="opponent" class="economy-card" style="flex:1; flex-direction:column; align-items:flex-start; gap:6px;"></div>
+          <div id="info" class="economy-card" style="flex:1; flex-direction:column; align-items:flex-end; gap:6px; text-align:right;"></div>
+        </div>
+
+        <div id="arena" style="margin-bottom:12px;">
+          <canvas id="canvas" width="900" height="400" style="border-radius:12px; display:block; width:100%;"></canvas>
+        </div>
+
+        <div id="hand" style="display:flex; gap:10px; flex-wrap:wrap; margin-bottom:12px;"></div>
+        <div id="controls"></div>
+      </section>
+
+    </main>
+  </div>
+
+  <div id="global-loader" class="global-loader hidden" aria-hidden="true">
+    <div class="global-loader-spinner"></div>
+  </div>
+
+  <script src="../assets/config.js"></script>
+  <script src="../assets/playweb-analytics.js"></script>
+  <!-- Client temps reel du jeu (WebSocket). Doit etre charge avant game.js. -->
+  <script src="https://cdn.socket.io/4.8.1/socket.io.min.js" integrity="sha384-mkQ3/7FUtcGyoppY6bz/PORYoGqOl7/aSUMn2ymDOJcapfS6PHqxhRTMh1RR0Q6+" crossorigin="anonymous"></script>
+
+  <script src="../assets/shared-nav.js"></script>
+  <script src="../assets/mobile-nav.js"></script>
+  <script src="../assets/loading.js"></script>
+  <script src="../assets/auth-gate.js"></script>
+  <script src="../assets/notif.js"></script>
+  <script src="../assets/game-notif.js"></script>
+  <script src="game.js"></script>
+  <script>lucide.createIcons();</script>
+</body>
+</html>

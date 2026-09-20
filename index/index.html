@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BrainrotStars</title>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link rel="stylesheet" href="style.css">
+    <link rel="icon" type="image/x-icon" href="https://raw.githubusercontent.com/schoolllex/images/refs/heads/main/BrainrotStar/favicon.ico">
+</head>
+<body>
+
+    <div class="background-glow">
+        <div class="glow-1"></div>
+        <div class="glow-2"></div>
+    </div>
+
+    <div class="container">
+        <header class="navbar">
+            <div class="logo">
+                <img src="https://raw.githubusercontent.com/schoolllex/images/refs/heads/main/BrainrotStar/BrainrotStar_logo_fc.png" alt="Brainrot Star" class="logo-image">
+            </div>
+            <button class="nav-toggle" type="button" aria-label="Ouvrir le menu" aria-expanded="false">
+                <i data-lucide="menu"></i>
+            </button>
+
+            <div class="nav-buttons">
+                <a href="../index/index.html" class="btn-nav nav-link">
+                    <i data-lucide="home"></i>
+                    <span>Accueil</span>
+                </a>
+                <a href="../shop/shop.html" class="btn-nav shop nav-link">
+                    <i data-lucide="store"></i>
+                    <span>Boutique</span>
+                </a>
+                <a href="../collection/collection.html" class="btn-nav collection nav-link">
+                    <i data-lucide="library"></i>
+                    <span>Collection</span>
+                </a>
+                <a href="../ranking/ranking.html" class="btn-nav ranking nav-link">
+                    <i data-lucide="trophy"></i>
+                    <span>Classement</span>
+                </a>
+                <a href="../friends/friends.html" class="btn-nav profile nav-link">
+                    <i data-lucide="user"></i>
+                    <span>Profil</span>
+                </a>
+                <button type="button" class="btn-nav profile nav-link">
+                  <i data-lucide="user"></i>
+                  <span>Profil</span>
+                </button>
+            </div>
+        </header>
+
+        <main class="content">
+            <div class="action-grid">
+                <a href="../game/game.html" class="btn-play nav-link" style="text-decoration: none; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0.5rem;">
+                    <i data-lucide="swords"></i>
+                    Lancer une partie en multijoueur
+                    <div class="shine"></div>
+                </a>
+
+                <a id="friends-card" href="../friends/friends.html" class="btn-card orange nav-link">
+                    <i data-lucide="users"></i>
+                    <span>Amis</span>
+                </a>
+
+                <a href="../rebirth/rebirth.html" class="btn-card purple nav-link" style="text-decoration: none; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0.5rem;">
+                    <i data-lucide="refresh-ccw"></i> Rebirth
+                </a>
+
+                <!-- <a href="../myspace/myspace.html" class="btn-card green nav-link" style="text-decoration: none; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0.5rem;">
+                    <i data-lucide="home"></i>
+                    <span>Mon Espace</span>
+                </a> -->
+
+                <a href="../battlepass/battlepass.html" class="btn-card sky wide nav-link has-badge">
+                    <span class="btn-emoji">🎟️</span>
+                    <span>Passe de combat</span>
+                    <span class="nav-badge hidden" id="bp-notif-badge"></span>
+                </a>
+
+                <a href="../ah/ah.html" class="btn-card green wide nav-link">
+                    <i data-lucide="shopping-bag"></i>
+                    <span>Marché des Brainrot</span>
+                </a>
+
+                <a href="../achievements/achievements.html" class="btn-card teal wide nav-link">
+                    <i data-lucide="award"></i>
+                    <span>Succès</span>
+                </a>
+
+            </div>
+
+            <section class="economy-grid">
+                <div class="economy-card">
+                    <div class="stat-info">
+                        <div class="icon-wrapper green"><i data-lucide="wallet"></i></div>
+                        <span>Argent total</span>
+                    </div>
+                    <span class="stat-number emerald" id="val-money">5,78M</span>
+                </div>
+
+                <div class="economy-card">
+                    <div class="stat-info">
+                        <div class="icon-wrapper yellow"><i data-lucide="coins"></i></div>
+                        <span>Pièces / sec</span>
+                    </div>
+                    <span class="stat-number gold" id="val-cps">+420 /s</span>
+                </div>
+            </section>
+
+            <section class="stats-container">
+                <p class="stats-title">Statistiques Globales</p>
+                
+                <div class="stat-row">
+                    <div class="stat-info">
+                        <div class="icon-wrapper red"><i data-lucide="brain"></i></div>
+                        <span>Brainrot Acquis</span>
+                    </div>
+                    <span class="stat-number" id="val-brainrots">14 420/69 000</span>
+                </div>
+
+                <div class="stat-row">
+                    <div class="stat-info">
+                        <div class="icon-wrapper purple"><i data-lucide="award"></i></div>
+                        <span>Succès</span>
+                    </div>
+                    <span class="stat-number" id="val-achievements">0 / 0</span>
+                </div>
+
+            </section>
+
+            <button id="logout-btn" class="logout-btn" type="button">
+                <i data-lucide="log-out"></i>
+                <span>Se déconnecter</span>
+            </button>
+        </main>
+    </div>
+
+    <div id="token-modal-overlay" class="token-modal-overlay hidden" role="dialog" aria-modal="true">
+        <div class="token-modal-card">
+            <div class="token-modal-icon">👤</div>
+            <h2 class="token-modal-title">Mon compte</h2>
+            <p class="token-modal-warning">⚠️ Ne le diffuse jamais — quiconque possède ce token peut accéder à ton compte.</p>
+            <div class="token-modal-value-wrap">
+                <div id="token-modal-value" class="token-modal-value">Chargement...</div>
+                <button id="token-modal-copy" class="token-modal-copy-btn" type="button">Copier</button>
+            </div>
+            <p class="token-modal-tip">Garde-le bien au chaud, c'est ta seule façon de te reconnecter sur un nouvel appareil.</p>
+            <button id="token-modal-logout" class="token-modal-logout-btn" type="button">Se déconnecter</button>
+            <button id="token-modal-close" class="token-modal-close-btn" type="button">Fermer</button>
+            <p id="token-modal-feedback" class="token-modal-feedback"></p>
+        </div>
+    </div>
+
+    <div id="global-loader" class="global-loader hidden" aria-hidden="true">
+        <div class="global-loader-spinner"></div>
+    </div>
+
+    <script src="../assets/config.js"></script>
+  <script src="../assets/playweb-analytics.js"></script>
+
+    <script src="../assets/shared-nav.js"></script>
+    <script src="../assets/mobile-nav.js"></script>
+    <script src="../assets/rebirth-reveal.js"></script>
+    <script src="../assets/loading.js"></script>
+    <script src="../assets/auth-gate.js"></script>
+    <script src="../assets/notif.js"></script>
+    <script src="../assets/game-notif.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>

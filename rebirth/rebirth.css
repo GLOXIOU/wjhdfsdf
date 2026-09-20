@@ -1,0 +1,836 @@
+.glow-rebirth {
+    position: absolute;
+    width: 50vw;
+    height: 50vw;
+    border-radius: 50%;
+    filter: blur(140px);
+    opacity: 0.1;
+    top: 30%;
+    left: 50%;
+    transform: translateX(-50%);
+    background: radial-gradient(circle, #a855f7 0%, #7e22ce 60%, transparent 100%);
+    pointer-events: none;
+}
+
+.rebirth-content {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+    padding-bottom: 3rem;
+}
+
+.rebirth-hero {
+    display: flex;
+    align-items: center;
+    gap: 1.25rem;
+    background: linear-gradient(135deg, rgba(168, 85, 247, 0.12), rgba(126, 34, 206, 0.08));
+    border: 1px solid rgba(168, 85, 247, 0.35);
+    border-radius: 24px;
+    padding: 1.5rem 1.75rem;
+    box-shadow: 0 10px 32px rgba(168, 85, 247, 0.1), var(--card-shadow);
+    flex-wrap: wrap;
+    gap: 1rem;
+}
+
+.rebirth-hero-icon {
+    width: 56px;
+    height: 56px;
+    border-radius: 16px;
+    background: linear-gradient(135deg, rgba(168, 85, 247, 0.35), rgba(126, 34, 206, 0.25));
+    border: 1px solid rgba(168, 85, 247, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    box-shadow: 0 0 24px rgba(168, 85, 247, 0.25);
+}
+
+.rebirth-hero-icon i {
+    width: 26px;
+    height: 26px;
+    color: #c084fc;
+}
+
+.rebirth-hero-text {
+    flex: 1;
+    min-width: 160px;
+}
+
+.rebirth-hero-text h1 {
+    font-size: 1.8rem;
+    font-weight: 900;
+    background: linear-gradient(135deg, #c084fc, #f97316);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    line-height: 1.2;
+    margin-bottom: 0.3rem;
+}
+
+.rebirth-hero-text p {
+    color: var(--text-muted);
+    font-size: 0.92rem;
+    line-height: 1.5;
+}
+
+.rebirth-wallet-badge {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    padding: 0.6rem 1rem;
+    font-weight: 800;
+    font-size: 1rem;
+    color: #facc15;
+    white-space: nowrap;
+}
+
+.rebirth-wallet-badge i {
+    width: 16px;
+    height: 16px;
+    color: #facc15;
+}
+
+.rebirth-status-card {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1.5rem;
+    background: var(--card-grad);
+    border: 1px solid var(--card-border-strong);
+    border-radius: 20px;
+    padding: 1.25rem 1.5rem;
+    box-shadow: var(--card-shadow);
+    flex-wrap: wrap;
+}
+
+.rebirth-level-badge {
+    display: flex;
+    align-items: center;
+    gap: 0.85rem;
+}
+
+.rebirth-level-icon {
+    font-size: 2.4rem;
+    line-height: 1;
+    filter: drop-shadow(0 0 10px rgba(168, 85, 247, 0.4));
+}
+
+.rebirth-level-label {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.rebirth-level-name {
+    font-size: 1.3rem;
+    font-weight: 900;
+    color: #c084fc;
+}
+
+.rebirth-status-right {
+    display: flex;
+    gap: 2rem;
+    flex-wrap: wrap;
+}
+
+.rebirth-stat {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 0.2rem;
+}
+
+.rebirth-stat-label {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.rebirth-stat-value {
+    font-size: 1.4rem;
+    font-weight: 900;
+}
+
+.rebirth-stat-value.purple { color: #c084fc; }
+.rebirth-stat-value.green { color: #4ade80; }
+
+.rebirth-next-card {
+    background: linear-gradient(160deg, rgba(168, 85, 247, 0.1) 0%, rgba(249, 115, 22, 0.06) 100%);
+    border: 1px solid rgba(168, 85, 247, 0.4);
+    border-radius: 24px;
+    padding: 1.5rem 1.75rem;
+    box-shadow: 0 16px 40px rgba(168, 85, 247, 0.12), var(--card-shadow);
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+}
+
+.rebirth-next-card.locked {
+    opacity: 0.55;
+    pointer-events: none;
+    border-color: rgba(255, 255, 255, 0.08);
+    background: var(--card-grad);
+    box-shadow: var(--card-shadow);
+}
+
+.rebirth-next-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+}
+
+.rebirth-next-title {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    font-size: 1.05rem;
+    font-weight: 800;
+    color: #c084fc;
+}
+
+.rebirth-next-title i {
+    width: 18px;
+    height: 18px;
+}
+
+.rebirth-next-cost {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: rgba(250, 204, 21, 0.1);
+    border: 1px solid rgba(250, 204, 21, 0.35);
+    border-radius: 10px;
+    padding: 0.45rem 0.9rem;
+    font-weight: 800;
+    color: #fbbf24;
+    font-size: 0.95rem;
+}
+
+.rebirth-next-cost i {
+    width: 15px;
+    height: 15px;
+}
+
+.rebirth-next-cost.cannot-afford {
+    border-color: rgba(239, 68, 68, 0.35);
+    background: rgba(239, 68, 68, 0.08);
+    color: #f87171;
+}
+
+.rebirth-rewards-preview {
+    display: flex;
+    flex-direction: column;
+    gap: 0.65rem;
+}
+
+.rebirth-rewards-title {
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.rebirth-rewards-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.6rem;
+}
+
+.reward-chip {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.35rem 0.75rem;
+    border-radius: 999px;
+    font-size: 0.82rem;
+    font-weight: 700;
+    border: 1px solid;
+    white-space: nowrap;
+}
+
+.reward-chip.cps {
+    background: rgba(74, 222, 128, 0.1);
+    border-color: rgba(74, 222, 128, 0.35);
+    color: #4ade80;
+}
+
+.reward-chip.chest-commun {
+    background: rgba(163, 163, 163, 0.1);
+    border-color: rgba(163, 163, 163, 0.35);
+    color: #d4d4d4;
+}
+
+.reward-chip.chest-rare {
+    background: rgba(59, 130, 246, 0.1);
+    border-color: rgba(59, 130, 246, 0.35);
+    color: #60a5fa;
+}
+
+.reward-chip.chest-epique {
+    background: rgba(168, 85, 247, 0.12);
+    border-color: rgba(168, 85, 247, 0.4);
+    color: #c084fc;
+}
+
+.reward-chip.chest-legendaire {
+    background: rgba(249, 115, 22, 0.12);
+    border-color: rgba(249, 115, 22, 0.4);
+    color: #fb923c;
+}
+
+.reward-chip.chest-mythique {
+    background: rgba(236, 72, 153, 0.12);
+    border-color: rgba(236, 72, 153, 0.4);
+    color: #f472b6;
+}
+
+.reward-chip.chest-divin {
+    background: rgba(234, 179, 8, 0.12);
+    border-color: rgba(234, 179, 8, 0.4);
+    color: #facc15;
+}
+
+.rebirth-do-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.6rem;
+    width: 100%;
+    padding: 1rem 1.5rem;
+    background: linear-gradient(135deg, #a855f7, #7e22ce);
+    border: none;
+    border-bottom: 4px solid #581c87;
+    border-radius: 16px;
+    color: white;
+    font-size: 1.05rem;
+    font-weight: 900;
+    cursor: pointer;
+    transition: transform 0.1s ease, filter 0.2s ease, box-shadow 0.2s ease;
+    box-shadow: 0 8px 24px rgba(168, 85, 247, 0.35);
+    position: relative;
+    overflow: hidden;
+}
+
+.rebirth-do-btn::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(180deg, rgba(255,255,255,0.08) 0%, transparent 60%);
+    pointer-events: none;
+}
+
+.rebirth-do-btn:hover {
+    filter: brightness(1.1);
+    box-shadow: 0 12px 32px rgba(168, 85, 247, 0.5);
+    transform: translateY(-1px);
+}
+
+.rebirth-do-btn:active {
+    transform: translateY(2px);
+    border-bottom-width: 0;
+}
+
+.rebirth-do-btn:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+    filter: none;
+    box-shadow: none;
+    transform: none;
+}
+
+.rebirth-do-btn i {
+    width: 18px;
+    height: 18px;
+}
+
+.rebirth-warning {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    text-align: center;
+    line-height: 1.5;
+}
+
+.rebirth-tiers-section {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.section-title-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+}
+
+.section-title-row h2 {
+    font-size: 1.15rem;
+    font-weight: 900;
+}
+
+.section-badge {
+    background: rgba(168, 85, 247, 0.15);
+    border: 1px solid rgba(168, 85, 247, 0.35);
+    border-radius: 999px;
+    padding: 0.25rem 0.75rem;
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: #c084fc;
+}
+
+.rebirth-tiers-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.rebirth-tier-card {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    background: var(--card-grad);
+    border: 1px solid var(--card-border-strong);
+    border-radius: 18px;
+    padding: 1rem 1.25rem;
+    box-shadow: var(--card-shadow);
+    transition: border-color 0.25s ease, box-shadow 0.25s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.rebirth-tier-card.tier-done {
+    border-color: rgba(74, 222, 128, 0.3);
+    background: linear-gradient(135deg, rgba(74, 222, 128, 0.05), rgba(22, 163, 74, 0.03));
+}
+
+.rebirth-tier-card.tier-current {
+    border-color: rgba(168, 85, 247, 0.5);
+    background: linear-gradient(135deg, rgba(168, 85, 247, 0.08), rgba(126, 34, 206, 0.05));
+    box-shadow: 0 0 0 1px rgba(168, 85, 247, 0.2), var(--card-shadow);
+}
+
+.rebirth-tier-card.tier-locked {
+    opacity: 0.55;
+}
+
+.tier-icon {
+    font-size: 2rem;
+    line-height: 1;
+    flex-shrink: 0;
+    width: 48px;
+    text-align: center;
+}
+
+.tier-body {
+    flex: 1;
+    min-width: 0;
+}
+
+.tier-header {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    margin-bottom: 0.35rem;
+    flex-wrap: wrap;
+}
+
+.tier-name {
+    font-weight: 900;
+    font-size: 1rem;
+}
+
+.tier-label-done {
+    font-size: 0.72rem;
+    font-weight: 800;
+    padding: 0.15rem 0.55rem;
+    border-radius: 999px;
+    background: rgba(74, 222, 128, 0.15);
+    border: 1px solid rgba(74, 222, 128, 0.35);
+    color: #4ade80;
+}
+
+.tier-label-current {
+    font-size: 0.72rem;
+    font-weight: 800;
+    padding: 0.15rem 0.55rem;
+    border-radius: 999px;
+    background: rgba(168, 85, 247, 0.18);
+    border: 1px solid rgba(168, 85, 247, 0.45);
+    color: #c084fc;
+    animation: tier-pulse 2s ease-in-out infinite;
+}
+
+@keyframes tier-pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.6; }
+}
+
+.tier-rewards-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+}
+
+.tier-cost {
+    flex-shrink: 0;
+    font-size: 0.88rem;
+    font-weight: 800;
+    color: #fbbf24;
+    white-space: nowrap;
+    text-align: right;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 0.2rem;
+}
+
+.tier-cost-label {
+    font-size: 0.7rem;
+    color: var(--text-muted);
+    font-weight: 600;
+}
+
+.tier-done-check {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: rgba(74, 222, 128, 0.18);
+    border: 1px solid rgba(74, 222, 128, 0.4);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.85rem;
+    flex-shrink: 0;
+}
+
+.rebirth-modal {
+    position: fixed;
+    inset: 0;
+    z-index: 12000;
+    display: grid;
+    place-items: center;
+    padding: 1rem;
+}
+
+.rebirth-modal.hidden {
+    display: none !important;
+}
+
+.rebirth-modal-overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.82);
+    backdrop-filter: blur(4px);
+}
+
+.rebirth-modal-card {
+    position: relative;
+    z-index: 1;
+    width: min(520px, 100%);
+    border-radius: 24px;
+    border: 1px solid rgba(168, 85, 247, 0.55);
+    background: linear-gradient(180deg, rgba(30, 15, 45, 0.98), rgba(15, 8, 25, 0.98));
+    box-shadow: 0 32px 64px rgba(0, 0, 0, 0.6), 0 0 60px rgba(168, 85, 247, 0.12);
+    padding: 2rem 1.5rem 1.5rem;
+    text-align: center;
+    animation: rebirth-modal-pop 0.4s cubic-bezier(0.2, 0.9, 0.3, 1.2);
+}
+
+@keyframes rebirth-modal-pop {
+    0% { transform: scale(0.75); opacity: 0; }
+    100% { transform: scale(1); opacity: 1; }
+}
+
+.rebirth-modal-icon {
+    font-size: 3rem;
+    margin-bottom: 0.75rem;
+    display: block;
+    animation: spin-once 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) 0.15s both;
+}
+
+@keyframes spin-once {
+    0% { transform: rotate(-180deg) scale(0.5); opacity: 0; }
+    100% { transform: rotate(0deg) scale(1); opacity: 1; }
+}
+
+.rebirth-modal-title {
+    font-size: 1.5rem;
+    font-weight: 900;
+    background: linear-gradient(135deg, #c084fc, #f97316);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 0.5rem;
+}
+
+.rebirth-modal-desc {
+    color: var(--text-muted);
+    font-size: 0.95rem;
+    margin-bottom: 1rem;
+}
+
+.rebirth-modal-warning {
+    background: rgba(239, 68, 68, 0.08);
+    border: 1px solid rgba(239, 68, 68, 0.25);
+    border-radius: 12px;
+    padding: 0.75rem 1rem;
+    color: #fca5a5;
+    font-size: 0.84rem;
+    font-weight: 600;
+    line-height: 1.5;
+    margin-bottom: 1.1rem;
+}
+
+.rebirth-modal-rewards {
+    background: rgba(168, 85, 247, 0.07);
+    border: 1px solid rgba(168, 85, 247, 0.2);
+    border-radius: 14px;
+    padding: 0.9rem 1rem;
+    margin-bottom: 1.4rem;
+    text-align: left;
+}
+
+.rebirth-modal-rewards-title {
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: #c084fc;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 0.6rem;
+}
+
+.rebirth-modal-rewards-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.rebirth-modal-actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.75rem;
+}
+
+.rebirth-modal-btn-cancel {
+    padding: 0.75rem 1rem;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 12px;
+    color: #d4d4d4;
+    font-weight: 800;
+    font-size: 0.95rem;
+    cursor: pointer;
+    transition: filter 0.15s ease, border-color 0.15s ease;
+}
+
+.rebirth-modal-btn-cancel:hover {
+    filter: brightness(1.1);
+    border-color: rgba(255, 255, 255, 0.25);
+}
+
+.rebirth-modal-btn-confirm {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1rem;
+    background: linear-gradient(135deg, #a855f7, #7e22ce);
+    border: none;
+    border-bottom: 3px solid #581c87;
+    border-radius: 12px;
+    color: white;
+    font-weight: 900;
+    font-size: 0.95rem;
+    cursor: pointer;
+    transition: filter 0.15s ease, transform 0.1s ease;
+    box-shadow: 0 8px 20px rgba(168, 85, 247, 0.3);
+}
+
+.rebirth-modal-btn-confirm i {
+    width: 16px;
+    height: 16px;
+}
+
+.rebirth-modal-btn-confirm:hover {
+    filter: brightness(1.1);
+    transform: translateY(-1px);
+}
+
+.rebirth-modal-btn-confirm:active {
+    transform: translateY(1px);
+    border-bottom-width: 0;
+}
+
+.rebirth-success-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 13000;
+    background: rgba(0, 0, 0, 0.9);
+    backdrop-filter: blur(8px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+}
+
+.rebirth-success-overlay.hidden {
+    display: none !important;
+}
+
+.rebirth-success-content {
+    position: relative;
+    text-align: center;
+    animation: success-rise 0.6s cubic-bezier(0.2, 0.9, 0.3, 1.2);
+    max-width: 480px;
+    width: 100%;
+}
+
+@keyframes success-rise {
+    0% { transform: translateY(40px); opacity: 0; }
+    100% { transform: translateY(0); opacity: 1; }
+}
+
+.rebirth-success-burst {
+    position: absolute;
+    inset: -60px;
+    background: radial-gradient(circle at center, rgba(168, 85, 247, 0.3) 0%, transparent 70%);
+    animation: burst-pulse 2s ease-in-out infinite;
+    pointer-events: none;
+    border-radius: 50%;
+}
+
+@keyframes burst-pulse {
+    0%, 100% { transform: scale(0.8); opacity: 0.6; }
+    50% { transform: scale(1.1); opacity: 1; }
+}
+
+.rebirth-success-icon {
+    font-size: 5rem;
+    line-height: 1;
+    display: block;
+    margin-bottom: 1rem;
+    animation: icon-bounce 0.8s cubic-bezier(0.34, 1.56, 0.64, 1) 0.2s both;
+}
+
+@keyframes icon-bounce {
+    0% { transform: scale(0); opacity: 0; }
+    100% { transform: scale(1); opacity: 1; }
+}
+
+.rebirth-success-title {
+    font-size: 2rem;
+    font-weight: 900;
+    background: linear-gradient(135deg, #c084fc, #fb923c);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 0.5rem;
+}
+
+.rebirth-success-sub {
+    color: var(--text-muted);
+    font-size: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.rebirth-success-sub strong {
+    color: #c084fc;
+}
+
+.rebirth-success-rewards {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 0.6rem;
+    margin-bottom: 2rem;
+}
+
+.rebirth-success-close-btn {
+    padding: 0.85rem 3rem;
+    background: linear-gradient(135deg, #a855f7, #7e22ce);
+    border: none;
+    border-bottom: 4px solid #581c87;
+    border-radius: 16px;
+    color: white;
+    font-size: 1rem;
+    font-weight: 900;
+    cursor: pointer;
+    box-shadow: 0 8px 24px rgba(168, 85, 247, 0.4);
+    transition: filter 0.2s ease, transform 0.1s ease;
+}
+
+.rebirth-success-close-btn:hover {
+    filter: brightness(1.1);
+    transform: translateY(-1px);
+}
+
+.rebirth-success-close-btn:active {
+    transform: translateY(2px);
+    border-bottom-width: 0;
+}
+
+/* ===== RESPONSIVE ===== */
+@media (max-width: 640px) {
+    .rebirth-hero {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.85rem;
+    }
+
+    .rebirth-wallet-badge {
+        align-self: flex-start;
+    }
+
+    .rebirth-status-card {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 1rem;
+    }
+
+    .rebirth-stat {
+        align-items: flex-start;
+    }
+
+    .rebirth-status-right {
+        flex-direction: row;
+        gap: 1.5rem;
+    }
+
+    .rebirth-next-header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .rebirth-tier-card {
+        flex-wrap: wrap;
+    }
+
+    .tier-cost {
+        align-items: flex-start;
+        flex-direction: row;
+        gap: 0.4rem;
+        align-items: center;
+    }
+
+    .rebirth-modal-actions {
+        grid-template-columns: 1fr;
+    }
+
+    .rebirth-success-icon {
+        font-size: 4rem;
+    }
+
+    .rebirth-success-title {
+        font-size: 1.6rem;
+    }
+}

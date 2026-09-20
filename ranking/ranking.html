@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BrainrotStars - Classement</title>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link rel="stylesheet" href="../index/style.css">
+    <link rel="stylesheet" href="ranking.css">
+    <link rel="icon" type="image/x-icon" href="https://raw.githubusercontent.com/schoolllex/images/refs/heads/main/BrainrotStar/favicon.ico">
+</head>
+<body>
+    <div class="background-glow">
+        <div class="glow-1"></div>
+        <div class="glow-2"></div>
+    </div>
+
+    <div class="container">
+        <header class="navbar">
+            <div class="logo">
+                <a href="../index/index.html" class="nav-link">
+                    <img src="https://raw.githubusercontent.com/schoolllex/images/refs/heads/main/BrainrotStar/BrainrotStar_logo_fc.png" alt="Brainrot Star" class="logo-image">
+                </a>
+            </div>
+            <button class="nav-toggle" type="button" aria-label="Ouvrir le menu" aria-expanded="false">
+                <i data-lucide="menu"></i>
+            </button>
+            <div class="nav-buttons">
+                <a href="../index/index.html" class="btn-nav nav-link">
+                  <i data-lucide="home"></i>
+                  <span>Accueil</span>
+                </a>
+                <a href="../shop/shop.html" class="btn-nav shop nav-link">
+                    <i data-lucide="store"></i>
+                    <span>Boutique</span>
+                </a>
+                <a href="../collection/collection.html" class="btn-nav collection nav-link">
+                    <i data-lucide="library"></i>
+                    <span>Collection</span>
+                </a>
+                <a href="../ranking/ranking.html" class="btn-nav ranking nav-link">
+                    <i data-lucide="trophy"></i>
+                    <span>Classement</span>
+                </a>
+                <a href="../friends/friends.html" class="btn-nav profile nav-link">
+                    <i data-lucide="user"></i>
+                    <span>Profil</span>
+                </a>
+                <button type="button" class="btn-nav profile nav-link">
+                  <i data-lucide="user"></i>
+                  <span>Profil</span>
+                </button>
+</div>
+        </header>
+
+        <main class="ranking-content">
+            <section class="publish-cta-card">
+                <div>
+                    <h2>Mon profil</h2>
+                    <p>Consulte ton classement et modifie ton pseudo ci-dessous.</p>
+                </div>
+                <button id="scroll-to-publish" class="btn-scroll-publish" type="button" aria-label="Aller à mon profil">
+                    <i data-lucide="arrow-down"></i>
+                </button>
+            </section>
+
+            <section class="ranking-card">
+                <div class="ranking-header">
+                    <div>
+                        <h1>Classement des joueurs</h1>
+                        <p class="ranking-subtitle">Top joueurs de Brainrot Star</p>
+                    </div>
+                    <div class="sort-controls">
+                        <label for="sort-by">Trier par</label>
+                        <select id="sort-by" class="sort-select">
+                            <option value="rank">Classement</option>
+                            <option value="name">Pseudo</option>
+                            <option value="cps">Pièces / sec</option>
+                            <option value="money">Argent</option>
+                            <option value="rebirth">Rebirths</option>
+                            <option value="win">Parties gagnées</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="ranking-table-wrap">
+                    <table class="ranking-table">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>Pseudo</th>
+                                <th>Pièces / sec</th>
+                                <th>Argent</th>
+                                <th>Rebirths</th>
+                                <th>Parties gagnées</th>
+                            </tr>
+                        </thead>
+                        <tbody id="ranking-body"></tbody>
+                    </table>
+                </div>
+
+                <p class="ranking-disclaimer">
+                    ⚠️ Ce classement n'affiche que les 50 premiers meilleurs joueurs.
+                </p>
+            </section>
+
+            <section class="publish-card" id="publish-score-section">
+                <h2>Votre profil</h2>
+                <div class="user-stats">
+                    <p class="user-rank">Vous êtes <span id="user-rank">...</span> avec <span id="user-cps">...</span> pièces/sec</p>
+                    <p class="user-pseudo-display">Votre pseudo est: <span id="user-pseudo-display">...</span></p>
+                </div>
+
+                <form id="publish-form" class="publish-form">
+                    <div class="publish-grid">
+                        <label>
+                            Modifier mon pseudo
+                            <input id="publish-name" type="text" maxlength="24" placeholder="Nouveau pseudo" required>
+                        </label>
+                    </div>
+
+                    <button type="submit" class="btn-publish">
+                        <i data-lucide="edit"></i>
+                        <span>Modifier mon pseudo</span>
+                    </button>
+                </form>
+
+                <p id="publish-feedback" class="publish-feedback" aria-live="polite"></p>
+            </section>
+        </main>
+    </div>
+
+    <div id="global-loader" class="global-loader hidden" aria-hidden="true">
+        <div class="global-loader-spinner"></div>
+    </div>
+
+    <script src="../assets/config.js"></script>
+  <script src="../assets/playweb-analytics.js"></script>
+
+    <script src="../assets/shared-nav.js"></script>
+    <script src="../assets/mobile-nav.js"></script>
+    <script src="../assets/rebirth-reveal.js"></script>
+    <script src="../assets/loading.js"></script>
+    <script src="../assets/auth-gate.js"></script>
+    <script src="../assets/notif.js"></script>
+    <script src="../assets/game-notif.js"></script>
+    <script src="ranking.js"></script>
+</body>
+</html>

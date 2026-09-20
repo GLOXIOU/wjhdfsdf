@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BrainrotStars - Boutique</title>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link rel="stylesheet" href="../index/style.css">
+    <link rel="stylesheet" href="shop.css">
+    <link rel="icon" type="image/x-icon" href="https://raw.githubusercontent.com/schoolllex/images/refs/heads/main/BrainrotStar/favicon.ico">
+</head>
+<body>
+    <div class="background-glow">
+        <div class="glow-1"></div>
+        <div class="glow-2"></div>
+    </div>
+
+    <div class="container">
+        <header class="navbar">
+            <div class="logo">
+                <a href="../index/index.html" class="nav-link">
+                    <img src="https://raw.githubusercontent.com/schoolllex/images/refs/heads/main/BrainrotStar/BrainrotStar_logo_fc.png" alt="Brainrot Star" class="logo-image">
+                </a>
+            </div>
+            <button class="nav-toggle" type="button" aria-label="Ouvrir le menu" aria-expanded="false">
+                <i data-lucide="menu"></i>
+            </button>
+            <div class="nav-buttons">
+                <a href="../index/index.html" class="btn-nav nav-link">
+                  <i data-lucide="home"></i>
+                  <span>Accueil</span>
+                </a>
+                <a href="../shop/shop.html" class="btn-nav shop nav-link">
+                    <i data-lucide="store"></i>
+                    <span>Boutique</span>
+                </a>
+                <a href="../collection/collection.html" class="btn-nav collection nav-link">
+                    <i data-lucide="library"></i>
+                    <span>Collection</span>
+                </a>
+                <a href="../ranking/ranking.html" class="btn-nav ranking nav-link">
+                    <i data-lucide="trophy"></i>
+                    <span>Classement</span>
+                </a>
+                <a href="../friends/friends.html" class="btn-nav profile nav-link">
+                    <i data-lucide="user"></i>
+                    <span>Profil</span>
+                </a>
+                <button type="button" class="btn-nav profile nav-link">
+                  <i data-lucide="user"></i>
+                  <span>Profil</span>
+                </button>
+</div>
+        </header>
+
+        <main class="shop-content">
+            <section class="shop-header-card">
+                <div class="shop-header-row">
+                    <h1>Boutique</h1>
+                    <div class="wallet-badge">
+                        <i data-lucide="wallet"></i>
+                        <span id="wallet-value">0</span>
+                    </div>
+                </div>
+            </section>
+
+            <section class="inventory-cta-card">
+                <div>
+                    <h2>Descendre dans mon inventaire</h2>
+                    <p>Clique pour aller directement voir tous tes objets en bas de page.</p>
+                </div>
+                <button id="scroll-to-inventory" class="btn-scroll-inventory" type="button" aria-label="Aller à mon inventaire">
+                    <i data-lucide="arrow-down"></i>
+                </button>
+            </section>
+
+            <section class="shop-section">
+                <div class="section-title">
+                    <h2>Caisses</h2>
+                    <span id="count-caisses" class="section-count">0</span>
+                </div>
+                <div id="caisses-grid" class="shop-grid"></div>
+            </section>
+
+            <section class="shop-section">
+                <div class="section-title">
+                    <h2>Caisses Boost</h2>
+                    <span id="count-boost-caisses" class="section-count">0</span>
+                </div>
+                <div id="boost-caisses-grid" class="shop-grid"></div>
+            </section>
+
+            <section class="promo-card">
+                <div>
+                    <h2>Entrer un code promo / de parrainage</h2>
+                    <p>Ajoute ton code ici pour activer une récompense.</p>
+                </div>
+                <div class="promo-form">
+                    <input id="promo-code-input" type="text" placeholder="Ex: BRAINROT2026" autocomplete="off">
+                    <button id="promo-code-btn" type="button">Valider</button>
+                </div>
+            </section>
+
+            <section class="shop-section inventory-section" id="inventory-section">
+                <div class="section-title">
+                    <h2>Mon inventaire</h2>
+                    <span id="count-inventory" class="section-count">0</span>
+                </div>
+                <div id="inventory-grid" class="shop-grid"></div>
+            </section>
+
+        </main>
+    </div>
+
+    <div id="buy-modal" class="buy-modal hidden" role="dialog" aria-modal="true" aria-labelledby="buy-modal-title">
+        <div class="buy-modal-overlay" data-close-modal="true"></div>
+        <div class="buy-modal-card">
+            <button id="buy-modal-close" class="buy-modal-close" type="button" aria-label="Fermer">
+                <i data-lucide="x"></i>
+            </button>
+            <div class="buy-modal-head">
+                <h3 id="buy-modal-title">Acheter</h3>
+                <p id="buy-modal-item-name" class="buy-modal-item-name"></p>
+            </div>
+
+            <div class="buy-qty-grid">
+                <button class="buy-qty-btn active" type="button" data-qty="1">Acheter x1</button>
+                <button class="buy-qty-btn" type="button" data-qty="5">Acheter x5</button>
+                <button class="buy-qty-btn" type="button" data-qty="10">Acheter x10</button>
+            </div>
+
+            <div class="buy-modal-actions">
+                <button id="buy-modal-to-inventory" class="buy-modal-action buy-modal-action-left" type="button">Mettre en inv • 0 💰</button>
+                <button id="buy-modal-open-now" class="buy-modal-action buy-modal-action-right" type="button">Ouvrir tout de suite • 0 💰</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="open-inventory-modal" class="buy-modal hidden" role="dialog" aria-modal="true" aria-labelledby="open-inventory-title">
+        <div class="buy-modal-overlay" data-close-open-modal="true"></div>
+        <div class="buy-modal-card">
+            <button id="open-inventory-close" class="buy-modal-close" type="button" aria-label="Fermer">
+                <i data-lucide="x"></i>
+            </button>
+            <div class="buy-modal-head">
+                <h3 id="open-inventory-title">Ouvrir une quantité personnalisée</h3>
+                <p id="open-inventory-item-name" class="buy-modal-item-name"></p>
+            </div>
+            <div class="open-qty-form">
+                <label for="open-inventory-qty">Quantité à ouvrir</label>
+                <input id="open-inventory-qty" type="number" min="1" step="1" value="1">
+                <p id="open-inventory-max" class="open-qty-help"></p>
+            </div>
+            <button id="open-inventory-confirm" class="buy-modal-action buy-modal-action-right open-inventory-confirm" type="button">Ouvrir maintenant</button>
+        </div>
+    </div>
+
+    <div id="opening-overlay" class="opening-overlay hidden">
+        <div class="opening-content">
+            <div id="crate-container" class="crate-container">
+                <div class="crate-shake">📦</div>
+            </div>
+            
+            <div id="reward-container" class="reward-container hidden">
+                <div class="reward-glow"></div>
+                <div id="single-reward-content" class="single-reward-content">
+                    <img id="reward-image" class="reward-image" src="" alt="" draggable="false" />
+                    <div id="reward-emoji" class="reward-emoji hidden"></div>
+                    <h2 id="reward-name" class="reward-name"></h2>
+                    <div class="reward-stats">
+                         <span class="cps-badge">⚡ <span id="reward-cps">0</span> /s</span>
+                    </div>
+                    <div id="reward-rarity" class="reward-rarity"></div>
+                </div>
+
+                <div id="multi-reward-content" class="multi-reward-content hidden">
+                    <h2 class="multi-title">RÉCOMPENSES</h2>
+                    <div id="multi-grid" class="multi-grid"></div>
+                    
+                    <div class="multi-footer">
+                        <div class="multi-total">
+                            TOTAL: ⚡ <span id="multi-total-cps">0</span> /s
+                        </div>
+                        <button id="multi-continue-btn" class="buy-btn multi-continue-btn">Continuer</button>
+                    </div>
+                </div>
+
+                <button id="close-opening-btn" class="buy-btn hidden" style="margin-top: 2rem; display: none;">Continuer</button>
+            </div>
+            
+            <button id="skip-animation-btn" class="skip-btn hidden">Passer l'animation ⏩</button>
+        </div>
+    </div>
+
+    <div id="global-loader" class="global-loader hidden" aria-hidden="true">
+        <div class="global-loader-spinner"></div>
+    </div>
+
+    <script src="../assets/config.js"></script>
+  <script src="../assets/playweb-analytics.js"></script>
+
+    <script src="../assets/shared-nav.js"></script>
+    <script src="../assets/mobile-nav.js"></script>
+    <script src="../assets/rebirth-reveal.js"></script>
+    <script src="../assets/loading.js"></script>
+    <script src="../assets/auth-gate.js"></script>
+    <script src="../assets/notif.js"></script>
+    <script src="../assets/game-notif.js"></script>
+    <script src="../collection/brainrot-data.js"></script>
+    <script src="shop.js"></script>
+</body>
+</html>
