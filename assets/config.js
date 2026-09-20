@@ -1,7 +1,7 @@
 (() => {
-  const PROD_API_BASE_URL = "http://[2a01:4f9:3a:276e::1593]:3001";
+  const PROD_API_BASE_URL = "https://bsstar.dino.icu/";
 
-  const LOCAL_API_BASE_URL = "http://localhost:3000";
+  const LOCAL_API_BASE_URL = "https://bsstar.dino.icu/";
   const PROD_STATS_URL = "";
   const LOCAL_STATS_URL = "http://localhost:4000";
 
