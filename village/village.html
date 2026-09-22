@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#070a14">
+    <meta name="format-detection" content="telephone=no">
+    <title>BrainrotStars - Villaggio</title>
+    <link rel="stylesheet" href="village.css">
+    <link rel="icon" type="image/x-icon" href="https://raw.githubusercontent.com/schoolllex/images/refs/heads/main/BrainrotStar/favicon.ico">
+</head>
+<body>
+    <div class="v-app" id="v-app">
+        <canvas id="v-canvas" aria-label="Carte de ton Villaggio"></canvas>
+
+        <header class="v-top">
+            <a class="v-btn v-btn-icon nav-link" href="../index/index.html" aria-label="Retour à l'accueil">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg>
+            </a>
+            <div class="v-title">
+                <strong id="v-title">Villaggio</strong>
+                <span id="v-subtitle">Palazzo niv. 1</span>
+            </div>
+            <div class="v-top-spacer"></div>
+            <div class="v-pill v-pill-builders" id="v-builders-pill" title="Constructeurs libres">
+                <span aria-hidden="true">🛖</span>
+                <strong id="v-builders">1/1</strong>
+            </div>
+            <div class="v-pill v-pill-gold" id="v-gold-pill">
+                <span aria-hidden="true">🪙</span>
+                <strong id="v-gold">0</strong>
+                <small id="v-cps">+0/s</small>
+            </div>
+        </header>
+
+        <div class="v-toasts" id="v-toasts" aria-live="polite"></div>
+
+        <footer class="v-bottom" id="v-bottom">
+            <button class="v-btn v-btn-collect hidden" id="v-collect-all" type="button">
+                <span aria-hidden="true">🪙</span>
+                <span class="v-collect-label">Tout récolter</span>
+                <span class="v-count" id="v-collect-count"></span>
+            </button>
+            <div class="v-spacer"></div>
+            <button class="v-btn v-btn-icon" id="v-help-btn" type="button" aria-label="Comment ça marche ?">❔</button>
+            <button class="v-btn v-btn-build" id="v-build-btn" type="button">
+                <span aria-hidden="true">🔨</span>
+                <span>Construire</span>
+            </button>
+        </footer>
+
+        <!-- Batiment selectionne -->
+        <section class="v-dock hidden" id="v-selbar" aria-live="polite">
+            <div class="v-dock-head">
+                <div class="v-dock-emoji" id="v-sel-emoji"></div>
+                <div class="v-dock-titles">
+                    <strong id="v-sel-name"></strong>
+                    <span id="v-sel-level"></span>
+                </div>
+                <button class="v-btn v-btn-icon" id="v-sel-close" type="button" aria-label="Fermer">✕</button>
+            </div>
+            <div class="v-dock-status" id="v-sel-status"></div>
+            <div class="v-dock-actions" id="v-sel-actions"></div>
+        </section>
+
+        <!-- Placement / deplacement -->
+        <section class="v-dock hidden" id="v-placebar">
+            <div class="v-place-row">
+                <div class="v-dock-emoji" id="v-place-emoji"></div>
+                <div class="v-place-info">
+                    <strong id="v-place-title"></strong>
+                    <span id="v-place-hint">Fais glisser le bâtiment, ou touche une case.</span>
+                </div>
+                <div class="v-place-actions">
+                    <button class="v-btn v-btn-cancel" id="v-place-cancel" type="button">✕ Annuler</button>
+                    <button class="v-btn v-btn-confirm" id="v-place-confirm" type="button">✓ Valider</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- Panneau du bas (boutique, details, aide) -->
+        <div class="v-sheet-backdrop hidden" id="v-sheet-backdrop"></div>
+        <section class="v-sheet" id="v-sheet" role="dialog" aria-modal="true" aria-hidden="true" aria-labelledby="v-sheet-title">
+            <div class="v-sheet-grip" aria-hidden="true"></div>
+            <header class="v-sheet-head">
+                <h2 id="v-sheet-title"></h2>
+                <button class="v-btn v-btn-icon" id="v-sheet-close" type="button" aria-label="Fermer">✕</button>
+            </header>
+            <div class="v-sheet-body" id="v-sheet-body"></div>
+        </section>
+
+        <div class="v-loading" id="v-loading">
+            <div class="v-loading-emoji" aria-hidden="true">🏰</div>
+            <p>Chargement du Villaggio…</p>
+        </div>
+
+        <div class="v-error hidden" id="v-error">
+            <div class="v-loading-emoji" aria-hidden="true">🏚️</div>
+            <p id="v-error-text">Impossible de charger ton Villaggio.</p>
+            <div class="v-error-actions">
+                <button class="v-btn v-btn-gold" id="v-error-retry" type="button">Réessayer</button>
+                <a class="v-btn" href="../index/index.html">Accueil</a>
+            </div>
+        </div>
+    </div>
+
+    <script src="../assets/config.js"></script>
+    <script src="../assets/playweb-analytics.js"></script>
+    <script src="../assets/auth-gate.js"></script>
+    <script src="../assets/game-notif.js"></script>
+    <script src="village.js"></script>
+</body>
+</html>

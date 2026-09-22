@@ -617,6 +617,44 @@ body {
     filter: brightness(1.06);
 }
 
+/* Villaggio : carte mise en avant sur l'accueil */
+.btn-card.btn-village {
+    min-height: 96px;
+    gap: 0.3rem;
+    font-size: 1.15rem;
+    background: linear-gradient(135deg, rgba(234, 179, 8, 0.26), rgba(249, 115, 22, 0.22));
+    border-color: rgba(250, 204, 21, 0.75);
+    touch-action: manipulation;
+}
+
+.btn-card.btn-village .btn-emoji {
+    font-size: 1.7rem;
+}
+
+.btn-village-sub {
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: #fde68a;
+    opacity: 0.9;
+}
+
+.btn-tag {
+    position: absolute;
+    top: 10px;
+    left: 12px;
+    padding: 0.18rem 0.5rem;
+    border-radius: 999px;
+    background: linear-gradient(135deg, #f97316, #dc2626);
+    color: #fff;
+    font-size: 0.66rem;
+    font-weight: 900;
+    letter-spacing: 0.06em;
+}
+
+.btn-card:active {
+    transform: scale(0.98);
+}
+
 .token-modal-overlay {
     position: fixed;
     inset: 0;

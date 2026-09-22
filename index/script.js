@@ -61,9 +61,30 @@ const App = {
             await this.loadAchievements();
             const token = await window.BrainrotAuth.waitUntilReady();
             if (!token) return;
+            this.loadVillageBadge(token);
             await this.syncEconomyFromServer({ forceGoldSync: true });
         } finally {
             GlobalLoader.hide(true);
+        }
+    },
+
+    /** Pastille du Villaggio : chantiers finis, mines a moitie pleines, coffre de forge pret. */
+    async loadVillageBadge(token) {
+        const badge = document.getElementById("village-notif-badge");
+        if (!badge) return;
+        try {
+            const response = await fetch(`${this.apiBaseUrl}/village/status`, {
+                headers: { "Authorization": `Bearer ${token}` }
+            });
+            if (!response.ok) return;
+            const payload = await response.json();
+            const status = payload?.status;
+            if (!payload?.success || !status) return;
+            const count = status.exists ? Number(status.ready || 0) : 0;
+            badge.textContent = status.exists ? String(count) : "!";
+            badge.classList.toggle("hidden", status.exists && count === 0);
+        } catch {
+            // La pastille est un bonus : l'accueil fonctionne sans.
         }
     },
 
