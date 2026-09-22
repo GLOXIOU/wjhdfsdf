@@ -40,7 +40,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const redirectToExternalPage = (path) => {
         const token = getToken();
-        window.location.href = `http://localhost:5501/${path}?token=${encodeURIComponent(token)}`;
+        window.location.href = `https://llextv.github.io/PlayWeb.front/${path}?token=${encodeURIComponent(token)}`;
     };
 
     nav.querySelector(".profile")?.addEventListener("click", () => {
