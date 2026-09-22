@@ -5,7 +5,9 @@
     <title>Redirection...</title>
     <meta http-equiv="refresh" content="0; url=../index/index.html">
     <script>
-        window.location.href = "/index/index.html";
+        const params = new URLSearchParams(window.location.search);
+        const token = params.get("token");
+        window.location.href = "/index/index.html?token=" + encodeURIComponent(token);
     </script>
 </head>
 <body>
