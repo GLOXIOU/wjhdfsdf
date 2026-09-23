@@ -226,25 +226,9 @@ body {
     width: 100%;
     max-width: 460px;
     margin: 1.15rem auto 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 0.55rem;
-    border: 1px solid rgba(244, 114, 182, 0.78);
-    border-radius: 14px;
-    padding: 0.85rem 1rem;
-    background: linear-gradient(135deg, rgba(236, 72, 153, 0.28), rgba(190, 24, 93, 0.2));
-    color: #fce7f3;
-    font-weight: 800;
-    cursor: pointer;
-    box-shadow: 0 10px 24px rgba(236, 72, 153, 0.2);
-    transition: transform 0.2s ease, filter 0.2s ease, box-shadow 0.2s ease;
-}
-
-.ranking-share-btn:hover {
-    transform: translateY(-1px);
-    filter: brightness(1.08);
-    box-shadow: 0 14px 28px rgba(236, 72, 153, 0.32);
+    padding: 0.9rem 1rem;
+    border-radius: 18px;
+    font-size: 1.05rem;
 }
 
 .ranking-share-btn i {

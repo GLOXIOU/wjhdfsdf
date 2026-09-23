@@ -162,6 +162,20 @@ function closeDiscordModal() {
 }
 
 document.addEventListener("DOMContentLoaded", () => {
+    shareRankingBtn?.addEventListener("click", () => {
+        discordOverlay?.classList.remove("hidden");
+        document.body.style.overflow = "hidden";
+    });
+    discordClose?.addEventListener("click", closeDiscordModal);
+    discordOverlay?.addEventListener("click", (event) => {
+        if (event.target === discordOverlay) closeDiscordModal();
+    });
+    document.addEventListener("keydown", (event) => {
+        if (event.key === "Escape" && !discordOverlay?.classList.contains("hidden")) {
+            closeDiscordModal();
+        }
+    });
+
     GlobalLoader.show();
     (async () => {
         try {
@@ -179,19 +193,6 @@ document.addEventListener("DOMContentLoaded", () => {
                     publishSection.scrollIntoView({ behavior: "smooth", block: "start" });
                 });
             }
-            shareRankingBtn?.addEventListener("click", () => {
-                discordOverlay?.classList.remove("hidden");
-                document.body.style.overflow = "hidden";
-            });
-            discordClose?.addEventListener("click", closeDiscordModal);
-            discordOverlay?.addEventListener("click", (event) => {
-                if (event.target === discordOverlay) closeDiscordModal();
-            });
-            document.addEventListener("keydown", (event) => {
-                if (event.key === "Escape" && !discordOverlay?.classList.contains("hidden")) {
-                    closeDiscordModal();
-                }
-            });
         } catch (error) {
             console.error("Erreur initialisation classement:", error);
             rankingBody.innerHTML = "";
