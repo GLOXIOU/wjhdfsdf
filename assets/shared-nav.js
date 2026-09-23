@@ -49,7 +49,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     document.querySelector("#friends-card")?.addEventListener("click", (event) => {
         event.preventDefault();
-        redirectToExternalPage("friends/index.html");
+        redirectToExternalPage("https://llextv.github.io/PlayWeb.front/amis/index.html?token=${encodeURIComponent(token)}");
     });
 
     if (window.lucide && typeof window.lucide.createIcons === "function") {
