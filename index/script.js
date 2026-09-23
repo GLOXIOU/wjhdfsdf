@@ -68,7 +68,10 @@ const App = {
         }
     },
 
-    /** Pastille du Villaggio : chantiers finis, mines a moitie pleines, coffre de forge pret. */
+    /**
+     * Pastille du Villaggio : chantiers finis, mines a moitie pleines, coffre
+     * de forge pret, recherche terminee... et attaques subies pas encore vues.
+     */
     async loadVillageBadge(token) {
         const badge = document.getElementById("village-notif-badge");
         if (!badge) return;
@@ -80,8 +83,10 @@ const App = {
             const payload = await response.json();
             const status = payload?.status;
             if (!payload?.success || !status) return;
-            const count = status.exists ? Number(status.ready || 0) : 0;
-            badge.textContent = status.exists ? String(count) : "!";
+            const defenses = status.exists ? Number(status.defenses || 0) : 0;
+            const count = status.exists ? Number(status.ready || 0) + defenses : 0;
+            badge.textContent = !status.exists ? "!" : defenses > 0 ? `⚔️${count}` : String(count);
+            badge.title = defenses > 0 ? `${defenses} attaque(s) subie(s) pendant ton absence` : "";
             badge.classList.toggle("hidden", status.exists && count === 0);
         } catch {
             // La pastille est un bonus : l'accueil fonctionne sans.

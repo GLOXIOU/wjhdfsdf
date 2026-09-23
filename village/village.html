@@ -6,7 +6,7 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="theme-color" content="#070a14">
+    <meta name="theme-color" content="#ea580c">
     <meta name="format-detection" content="telephone=no">
     <title>BrainrotStars - Villaggio</title>
     <link rel="stylesheet" href="village.css">
@@ -14,9 +14,10 @@
 </head>
 <body>
     <div class="v-app" id="v-app">
-        <canvas id="v-canvas" aria-label="Carte de ton Villaggio"></canvas>
+        <canvas id="v-canvas" aria-label="Carte du Villaggio"></canvas>
 
-        <header class="v-top">
+        <!-- ===== Ton village : barre du haut ===== -->
+        <header class="v-top" id="v-top">
             <a class="v-btn v-btn-icon nav-link" href="../index/index.html" aria-label="Retour à l'accueil">
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg>
             </a>
@@ -25,6 +26,14 @@
                 <span id="v-subtitle">Palazzo niv. 1</span>
             </div>
             <div class="v-top-spacer"></div>
+            <div class="v-pill v-pill-trophy" id="v-trophy-pill" title="Trophées">
+                <span aria-hidden="true" id="v-league">🌱</span>
+                <strong id="v-trophies">0</strong>
+            </div>
+            <div class="v-pill v-pill-shield hidden" id="v-shield-pill" title="Bouclier : personne ne peut t'attaquer">
+                <span aria-hidden="true">🛡️</span>
+                <strong id="v-shield"></strong>
+            </div>
             <div class="v-pill v-pill-builders" id="v-builders-pill" title="Constructeurs libres">
                 <span aria-hidden="true">🛖</span>
                 <strong id="v-builders">1/1</strong>
@@ -38,6 +47,7 @@
 
         <div class="v-toasts" id="v-toasts" aria-live="polite"></div>
 
+        <!-- ===== Ton village : barre du bas ===== -->
         <footer class="v-bottom" id="v-bottom">
             <button class="v-btn v-btn-collect hidden" id="v-collect-all" type="button">
                 <span aria-hidden="true">🪙</span>
@@ -46,9 +56,19 @@
             </button>
             <div class="v-spacer"></div>
             <button class="v-btn v-btn-icon" id="v-help-btn" type="button" aria-label="Comment ça marche ?">❔</button>
+            <button class="v-btn v-btn-army" id="v-army-btn" type="button">
+                <span aria-hidden="true">⚔️</span>
+                <span class="v-label">Armée</span>
+                <small id="v-army-count"></small>
+            </button>
             <button class="v-btn v-btn-build" id="v-build-btn" type="button">
                 <span aria-hidden="true">🔨</span>
-                <span>Construire</span>
+                <span class="v-label">Construire</span>
+            </button>
+            <button class="v-btn v-btn-attack v-btn-big" id="v-attack-btn" type="button">
+                <span aria-hidden="true">🗡️</span>
+                <span class="v-label">Attaquer</span>
+                <span class="v-badge hidden" id="v-attack-badge"></span>
             </button>
         </footer>
 
@@ -81,7 +101,38 @@
             </div>
         </section>
 
-        <!-- Panneau du bas (boutique, details, aide) -->
+        <!-- ===== Bataille (reperage, combat, replay) ===== -->
+        <div class="v-battle hidden" id="v-battle">
+            <div class="v-bt-top">
+                <div class="v-bt-panel v-bt-info">
+                    <strong id="v-bt-name"></strong>
+                    <span id="v-bt-sub"></span>
+                    <span class="v-bt-stakes" id="v-bt-stakes"></span>
+                    <span class="v-bt-loot" id="v-bt-loot"></span>
+                </div>
+                <div class="v-top-spacer"></div>
+                <div class="v-bt-panel v-bt-score">
+                    <div class="v-bt-timer">
+                        <small id="v-bt-timer-label">Repérage</small>
+                        <strong id="v-bt-timer">3:00</strong>
+                    </div>
+                    <div class="v-bt-stars" id="v-bt-stars" aria-label="Étoiles"></div>
+                    <strong class="v-bt-pct" id="v-bt-pct">0 %</strong>
+                    <span class="v-bt-looted hidden" id="v-bt-looted"></span>
+                </div>
+            </div>
+            <p class="v-bt-hint" id="v-bt-hint">Choisis une troupe, puis touche la plage ou une zone libre pour la déployer. Garde le doigt appuyé pour en poser plusieurs.</p>
+            <div class="v-bt-bottom">
+                <div class="v-bt-troops" id="v-bt-troops"></div>
+                <div class="v-bt-actions">
+                    <button class="v-btn v-btn-speed hidden" id="v-bt-speed" type="button">⏩ x1</button>
+                    <button class="v-btn v-btn-gold hidden" id="v-bt-next" type="button">Suivant</button>
+                    <button class="v-btn v-btn-end" id="v-bt-end" type="button">✕ Quitter</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Panneau du bas (boutique, details, armee, guerre, resultats...) -->
         <div class="v-sheet-backdrop hidden" id="v-sheet-backdrop"></div>
         <section class="v-sheet" id="v-sheet" role="dialog" aria-modal="true" aria-hidden="true" aria-labelledby="v-sheet-title">
             <div class="v-sheet-grip" aria-hidden="true"></div>
@@ -93,15 +144,17 @@
         </section>
 
         <div class="v-loading" id="v-loading">
-            <div class="v-loading-emoji" aria-hidden="true">🏰</div>
-            <p>Chargement du Villaggio…</p>
+            <div class="v-loading-glow" aria-hidden="true"></div>
+            <img class="v-loading-logo" src="../assets/BrainrotStar_logo_fc.png" alt="Brainrot Star">
+            <div class="v-spinner" aria-hidden="true"></div>
+            <p id="v-loading-text">Chargement du Villaggio…</p>
         </div>
 
         <div class="v-error hidden" id="v-error">
-            <div class="v-loading-emoji" aria-hidden="true">🏚️</div>
+            <img class="v-loading-logo" src="../assets/BrainrotStar_logo_fc.png" alt="Brainrot Star">
             <p id="v-error-text">Impossible de charger ton Villaggio.</p>
             <div class="v-error-actions">
-                <button class="v-btn v-btn-gold" id="v-error-retry" type="button">Réessayer</button>
+                <button class="v-btn v-btn-build" id="v-error-retry" type="button">Réessayer</button>
                 <a class="v-btn" href="../index/index.html">Accueil</a>
             </div>
         </div>
@@ -111,6 +164,10 @@
     <script src="../assets/playweb-analytics.js"></script>
     <script src="../assets/auth-gate.js"></script>
     <script src="../assets/game-notif.js"></script>
-    <script src="village.js"></script>
+    <script src="village.base.js"></script>
+    <script src="village.render.js"></script>
+    <script src="village.home.js"></script>
+    <script src="village.war.js"></script>
+    <script src="village.boot.js"></script>
 </body>
 </html>
