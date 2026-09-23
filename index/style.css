@@ -604,6 +604,20 @@ body {
     filter: brightness(1.06);
 }
 
+.btn-card.discord {
+    background: linear-gradient(135deg, rgba(236, 72, 153, 0.28), rgba(190, 24, 93, 0.2));
+    border-color: rgba(244, 114, 182, 0.78);
+    color: #fce7f3;
+    box-shadow: 0 10px 24px rgba(236, 72, 153, 0.22), inset 0 0 0 1px rgba(255, 255, 255, 0.06);
+}
+
+.btn-card.discord:hover {
+    border-color: #f9a8d4;
+    box-shadow: 0 14px 28px rgba(236, 72, 153, 0.36);
+    filter: brightness(1.06);
+    transform: translateY(-2px) scale(1.015);
+}
+
 .btn-card.yellow {
     background: linear-gradient(135deg, rgba(234, 179, 8, 0.22), rgba(202, 138, 4, 0.18));
     border-color: rgba(234, 179, 8, 0.65);
@@ -794,6 +808,123 @@ body {
     font-size: 0.85rem;
     font-weight: 700;
     color: #86efac;
+}
+
+.discord-modal-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 12000;
+    display: grid;
+    place-items: center;
+    padding: 1rem;
+    background: rgba(4, 2, 8, 0.72);
+    backdrop-filter: blur(8px);
+}
+
+.discord-modal-overlay.hidden {
+    display: none !important;
+}
+
+.discord-modal-card {
+    position: relative;
+    width: min(430px, 100%);
+    max-height: calc(100vh - 2rem);
+    overflow: hidden;
+    border: 1px solid rgba(244, 114, 182, 0.55);
+    border-radius: 24px;
+    padding: 1.8rem 1.4rem 1.5rem;
+    background: linear-gradient(180deg, rgba(41, 13, 31, 0.92), rgba(20, 8, 20, 0.94));
+    box-shadow: 0 28px 56px rgba(0, 0, 0, 0.55), 0 0 60px rgba(236, 72, 153, 0.14);
+    text-align: center;
+    animation: discord-modal-pop 0.35s cubic-bezier(0.2, 0.9, 0.3, 1.2);
+}
+
+@keyframes discord-modal-pop {
+    0% { transform: scale(0.82); opacity: 0; }
+    100% { transform: scale(1); opacity: 1; }
+}
+
+.discord-modal-close {
+    position: absolute;
+    top: 0.75rem;
+    right: 0.75rem;
+    width: 2rem;
+    height: 2rem;
+    display: grid;
+    place-items: center;
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.07);
+    color: #fbcfe8;
+    cursor: pointer;
+    transition: filter 0.15s ease, background 0.15s ease;
+}
+
+.discord-modal-close:hover {
+    background: rgba(244, 114, 182, 0.18);
+    filter: brightness(1.12);
+}
+
+.discord-modal-close i {
+    width: 16px;
+    height: 16px;
+}
+
+.discord-modal-icon {
+    margin-bottom: 0.4rem;
+    font-size: 2.2rem;
+}
+
+.discord-modal-title {
+    margin-bottom: 1.2rem;
+    color: #fbcfe8;
+    font-size: 1.4rem;
+    font-weight: 900;
+}
+
+.discord-modal-qr {
+    display: block;
+    width: min(250px, 75vw);
+    aspect-ratio: 1;
+    margin: 0 auto;
+    border: 8px solid rgba(255, 255, 255, 0.96);
+    border-radius: 16px;
+    box-shadow: 0 14px 30px rgba(0, 0, 0, 0.34), 0 0 28px rgba(244, 114, 182, 0.12);
+}
+
+.discord-modal-or {
+    margin: 1rem 0;
+    color: #f9a8d4;
+    font-size: 0.9rem;
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+}
+
+.discord-modal-link {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    width: 100%;
+    border: 1px solid rgba(244, 114, 182, 0.7);
+    border-radius: 12px;
+    padding: 0.8rem 1rem;
+    background: linear-gradient(135deg, rgba(236, 72, 153, 0.28), rgba(190, 24, 93, 0.2));
+    color: #fce7f3;
+    font-weight: 800;
+    text-decoration: none;
+    transition: filter 0.15s ease, transform 0.15s ease;
+}
+
+.discord-modal-link:hover {
+    filter: brightness(1.12);
+    transform: translateY(-1px);
+}
+
+.discord-modal-link i {
+    width: 17px;
+    height: 17px;
 }
 
 .logout-btn {

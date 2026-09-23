@@ -57,7 +57,7 @@
             <section class="publish-cta-card">
                 <div>
                     <h2>Mon profil</h2>
-                    <p>Consulte ton classement et modifie ton pseudo ci-dessous.</p>
+                    <p>Consulte ton classement et partage ta position avec la communauté.</p>
                 </div>
                 <button id="scroll-to-publish" class="btn-scroll-publish" type="button" aria-label="Aller à mon profil">
                     <i data-lucide="arrow-down"></i>
@@ -108,26 +108,30 @@
                 <h2>Votre profil</h2>
                 <div class="user-stats">
                     <p class="user-rank">Vous êtes <span id="user-rank">...</span> avec <span id="user-cps">...</span> pièces/sec</p>
-                    <p class="user-pseudo-display">Votre pseudo est: <span id="user-pseudo-display">...</span></p>
                 </div>
 
-                <form id="publish-form" class="publish-form">
-                    <div class="publish-grid">
-                        <label>
-                            Modifier mon pseudo
-                            <input id="publish-name" type="text" maxlength="24" placeholder="Nouveau pseudo" required>
-                        </label>
-                    </div>
-
-                    <button type="submit" class="btn-publish">
-                        <i data-lucide="edit"></i>
-                        <span>Modifier mon pseudo</span>
-                    </button>
-                </form>
-
-                <p id="publish-feedback" class="publish-feedback" aria-live="polite"></p>
+                <button id="share-ranking-btn" class="ranking-share-btn" type="button">
+                    <i data-lucide="message-circle"></i>
+                    <span>Partager mon classement dans le serveur Discord</span>
+                </button>
             </section>
         </main>
+    </div>
+
+    <div id="discord-modal-overlay" class="discord-modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="discord-modal-title">
+        <div class="discord-modal-card">
+            <button id="discord-modal-close" class="discord-modal-close" type="button" aria-label="Fermer">
+                <i data-lucide="x"></i>
+            </button>
+            <div class="discord-modal-icon" aria-hidden="true">💬</div>
+            <h2 id="discord-modal-title" class="discord-modal-title">Rejoins notre Discord</h2>
+            <img class="discord-modal-qr" src="../assets/qr-code-discord.jpg" alt="QR code pour rejoindre le Discord BrainrotStar">
+            <p class="discord-modal-or">ou</p>
+            <a class="discord-modal-link" href="https://discord.gg/fSR33HnRaf" target="_blank" rel="noopener noreferrer">
+                <i data-lucide="external-link"></i>
+                <span>Ouvrir le lien Discord</span>
+            </a>
+        </div>
     </div>
 
     <div id="global-loader" class="global-loader hidden" aria-hidden="true">

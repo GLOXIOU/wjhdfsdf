@@ -1,13 +1,12 @@
 const rankingBody = document.getElementById("ranking-body");
 const sortBy = document.getElementById("sort-by");
-const publishForm = document.getElementById("publish-form");
-const publishName = document.getElementById("publish-name");
-const publishFeedback = document.getElementById("publish-feedback");
 const scrollToPublishBtn = document.getElementById("scroll-to-publish");
 const publishSection = document.getElementById("publish-score-section");
 const userRankElement = document.getElementById("user-rank");
 const userCpsElement = document.getElementById("user-cps");
-const userPseudoDisplay = document.getElementById("user-pseudo-display");
+const shareRankingBtn = document.getElementById("share-ranking-btn");
+const discordOverlay = document.getElementById("discord-modal-overlay");
+const discordClose = document.getElementById("discord-modal-close");
 const API_BASE_URL = window.API_BASE_URL + "";
 const LEADERBOARD_ROUTE_BASE = "/leaderboard";
 
@@ -135,7 +134,6 @@ function updateUserRank() {
     }
     
     userCpsElement.textContent = fmtInt(Math.floor(userStats.coinPerSec));
-    userPseudoDisplay.textContent = userStats.pseudo;
 }
 
 async function loadLeaderboard() {
@@ -158,51 +156,9 @@ async function loadUserStats() {
     updateUserRank();
 }
 
-async function publishScore(event) {
-    event.preventDefault();
-    const name = (publishName.value || "").trim();
-
-    if (!name) {
-        publishFeedback.textContent = "Entre un pseudo valide.";
-        publishFeedback.style.color = "#fda4af";
-        return;
-    }
-
-    try {
-        const token = await window.BrainrotAuth.waitUntilReady();
-        if (!token) {
-            throw new Error("No auth token");
-        }
-
-        const response = await fetch(`${API_BASE_URL}/user/pseudo`, {
-            method: "PUT",
-            headers: {
-                "Content-Type": "application/json",
-                Authorization: `Bearer ${token}`
-            },
-            body: JSON.stringify({ pseudo: name })
-        });
-
-        const data = await response.json();
-
-        if (!response.ok || !data.success) {
-            publishFeedback.textContent = data.message || "Erreur lors de la modification.";
-            publishFeedback.style.color = "#fda4af";
-            return;
-        }
-
-        publishFeedback.textContent = `Pseudo modifié avec succès ✅`;
-        publishFeedback.style.color = "#86efac";
-        
-        await loadUserStats();
-        await loadLeaderboard();
-        
-        publishForm.reset();
-    } catch (error) {
-        console.error("Erreur modification pseudo:", error);
-        publishFeedback.textContent = "Impossible de modifier le pseudo pour le moment.";
-        publishFeedback.style.color = "#fda4af";
-    }
+function closeDiscordModal() {
+    discordOverlay?.classList.add("hidden");
+    document.body.style.overflow = "";
 }
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -214,23 +170,30 @@ document.addEventListener("DOMContentLoaded", () => {
             sortBy.addEventListener("change", async () => {
                 try {
                     await loadLeaderboard();
-                    publishFeedback.textContent = "";
                 } catch (error) {
                     console.error("Erreur chargement classement:", error);
-                    publishFeedback.textContent = "Impossible de charger le classement pour le moment.";
-                    publishFeedback.style.color = "#fda4af";
                 }
             });
-            publishForm.addEventListener("submit", publishScore);
             if (scrollToPublishBtn && publishSection) {
                 scrollToPublishBtn.addEventListener("click", () => {
                     publishSection.scrollIntoView({ behavior: "smooth", block: "start" });
                 });
             }
+            shareRankingBtn?.addEventListener("click", () => {
+                discordOverlay?.classList.remove("hidden");
+                document.body.style.overflow = "hidden";
+            });
+            discordClose?.addEventListener("click", closeDiscordModal);
+            discordOverlay?.addEventListener("click", (event) => {
+                if (event.target === discordOverlay) closeDiscordModal();
+            });
+            document.addEventListener("keydown", (event) => {
+                if (event.key === "Escape" && !discordOverlay?.classList.contains("hidden")) {
+                    closeDiscordModal();
+                }
+            });
         } catch (error) {
             console.error("Erreur initialisation classement:", error);
-            publishFeedback.textContent = "Impossible de charger le classement pour le moment.";
-            publishFeedback.style.color = "#fda4af";
             rankingBody.innerHTML = "";
         } finally {
             GlobalLoader.hide(true);

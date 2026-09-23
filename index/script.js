@@ -331,6 +331,30 @@ const App = {
                 }
             });
         }
+
+        const discordCard = document.getElementById('discord-card');
+        const discordOverlay = document.getElementById('discord-modal-overlay');
+        const discordClose = document.getElementById('discord-modal-close');
+        const closeDiscordModal = () => {
+            discordOverlay?.classList.add('hidden');
+            document.body.style.overflow = '';
+        };
+
+        discordCard?.addEventListener('click', () => {
+            discordOverlay?.classList.remove('hidden');
+            document.body.style.overflow = 'hidden';
+        });
+
+        discordClose?.addEventListener('click', closeDiscordModal);
+        discordOverlay?.addEventListener('click', (event) => {
+            if (event.target === discordOverlay) closeDiscordModal();
+        });
+
+        document.addEventListener('keydown', (event) => {
+            if (event.key === 'Escape' && !discordOverlay?.classList.contains('hidden')) {
+                closeDiscordModal();
+            }
+        });
     }
 };
 
