@@ -115,7 +115,7 @@
                     <div class="skeleton-hp"></div>
                   </div>
                 </div>
-                <p class="tuto-step-desc">Pose tes cartes sur l'arène en les glissant-déposant. Tes unités avancent et attaquent automatiquement — comme dans Clash Royale.</p>
+                <p class="tuto-step-desc">Touche une carte puis l'arène (ou glisse-la). Tes unités passent la rivière par les ponts et attaquent toutes seules. Les objets (💣 🍾 🧊 🍌) se lancent n'importe où.</p>
               </div>
             </div>
 
@@ -135,7 +135,7 @@
                   <div class="tuto-mana-pip"></div>
                   <div class="tuto-mana-pip"></div>
                 </div>
-                <p class="tuto-step-desc">Le mana se recharge automatiquement. Gérer ton mana intelligemment est la clé de la victoire. Détruis les tours de l'adversaire pour gagner !</p>
+                <p class="tuto-step-desc">Le mana se recharge tout seul (x2 la dernière minute). Chaque tour détruite = 👑. Casse la tour du roi pour gagner direct, sinon le plus de couronnes l'emporte en 3 minutes.</p>
               </div>
             </div>
           </div>
@@ -198,6 +198,7 @@
             <span style="font-size:1.05rem; font-weight:900;">Sélectionne exactement 10 cartes pour ton deck</span>
           </div>
         </div>
+        <p class="cr-deck-note">+ 4 objets à lancer ajoutés d'office : 💣 Bombardino · 🍾 Molotov Caliente · 🧊 Glaçon Glacio · 🍌 Banana Tung Tung</p>
         <div id="deck-list" style="display:grid; grid-template-columns:repeat(auto-fill, minmax(130px, 1fr)); gap:12px; margin-bottom:20px;"></div>
         <div style="display:flex; flex-direction:column; gap:10px;">
           <div style="display:flex; gap:10px; flex-wrap:wrap; justify-content:center;">
@@ -240,17 +241,42 @@
       </section>
 
       <section id="game" style="display:none">
-        <div id="topbar" style="display:flex; justify-content:space-between; gap:12px; margin-bottom:12px; align-items:center;">
-          <div id="opponent" class="economy-card" style="flex:1; flex-direction:column; align-items:flex-start; gap:6px;"></div>
-          <div id="info" class="economy-card" style="flex:1; flex-direction:column; align-items:flex-end; gap:6px; text-align:right;"></div>
+        <div class="cr-hud">
+          <div class="cr-side is-me">
+            <span class="cr-name" id="me-name">Toi</span>
+            <div class="cr-crowns is-me" id="me-crowns"></div>
+          </div>
+          <div class="cr-timer">
+            <small id="timer-label">Temps</small>
+            <strong id="timer-value">3:00</strong>
+          </div>
+          <div class="cr-side is-foe">
+            <span class="cr-name" id="enemy-name">Adversaire</span>
+            <div class="cr-crowns" id="enemy-crowns"></div>
+          </div>
         </div>
 
-        <div id="arena" style="margin-bottom:12px;">
-          <canvas id="canvas" width="900" height="400" style="border-radius:12px; display:block; width:100%;"></canvas>
+        <div id="arena" class="cr-arena">
+          <canvas id="canvas" width="900" height="400" aria-label="Arène"></canvas>
         </div>
 
-        <div id="hand" style="display:flex; gap:10px; flex-wrap:wrap; margin-bottom:12px;"></div>
-        <div id="controls"></div>
+        <div class="cr-dock">
+          <div class="cr-next">
+            <small>Suivante</small>
+            <div class="cr-next-card" id="next-card"></div>
+          </div>
+          <div id="hand" class="cr-hand"></div>
+        </div>
+
+        <div class="cr-elixir" aria-label="Mana">
+          <span class="cr-elixir-drop">🧪</span>
+          <div class="cr-elixir-bar">
+            <div class="cr-elixir-fill" id="elixir-fill"></div>
+            <div class="cr-elixir-ticks"></div>
+          </div>
+          <strong class="cr-elixir-count" id="elixir-count">5</strong>
+          <span class="cr-elixir-x2 hidden" id="elixir-x2">x2</span>
+        </div>
       </section>
 
     </main>
@@ -271,6 +297,7 @@
   <script src="../assets/auth-gate.js"></script>
   <script src="../assets/notif.js"></script>
   <script src="../assets/game-notif.js"></script>
+  <script src="game.arena.js"></script>
   <script src="game.js"></script>
   <script>lucide.createIcons();</script>
 </body>

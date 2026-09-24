@@ -66,7 +66,7 @@
         btLooted: "v-bt-looted", btTroops: "v-bt-troops", btHint: "v-bt-hint",
         btNext: "v-bt-next", btEnd: "v-bt-end", btSpeed: "v-bt-speed",
         visit: "v-visit", vsTop: "v-vs-top", vsBottom: "v-vs-bottom", vsName: "v-vs-name", vsSub: "v-vs-sub",
-        vsList: "v-vs-list", vsHome: "v-vs-home",
+        vsList: "v-vs-list", vsFight: "v-vs-fight", vsHome: "v-vs-home",
         loading: "v-loading", loadingText: "v-loading-text",
         error: "v-error", errorText: "v-error-text", errorRetry: "v-error-retry"
     };

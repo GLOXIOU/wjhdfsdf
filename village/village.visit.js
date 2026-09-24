@@ -3,8 +3,8 @@
 
    Un panneau de recherche (tes amis epingles en haut, puis tous les joueurs)
    et une scene en lecture seule : on se promene sur l'ile, on touche un
-   batiment pour voir son nom et son niveau. Les pieges ne sont jamais
-   envoyes par le serveur.
+   batiment pour voir son nom et son niveau, et on peut defier un ami qui
+   n'est pas sous bouclier. Les pieges ne sont jamais envoyes par le serveur.
 
    Leger pour le serveur : la recherche attend une pause dans la frappe, et
    chaque resultat (amis compris) est garde une minute.
@@ -28,11 +28,11 @@
     let searchTimer = 0;
 
     /** Pour comparer les pseudos sans se soucier des majuscules ni des accents. */
-    const fold = (text) => String(text || "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
+    const fold = (text) => String(text || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
 
-    async function load(key, path, pick) {
+    async function load(key, path, pick, maxAge = CACHE_MS) {
         const hit = cache.get(key);
-        if (hit && Date.now() - hit.at < CACHE_MS) return hit.items;
+        if (hit && Date.now() - hit.at < maxAge) return hit.items;
         const res = await V.api("GET", path);
         if (!res?.success) throw new Error(res?.message || "Chargement impossible.");
         const items = pick(res);
@@ -215,6 +215,41 @@
         view.setScene(visitScene);
         view.centerCamera();
         V.util.track("village_visit");
+        showChallenge(data);
+    }
+
+    /**
+     * Bouton "Defier" : seulement sur l'ile d'un ami. La liste d'amis vient du
+     * cache du panneau (une amitie change rarement : un cache ancien suffit) ;
+     * sinon, une seule requete legere.
+     */
+    async function showChallenge(data) {
+        const btn = ui.vsFight;
+        btn.classList.add("hidden");
+        let friends;
+        try {
+            friends = await load("friends", "/village/war/friends", (res) => res.friends, 10 * 60_000);
+        } catch {
+            return;
+        }
+        if (T?.data !== data || !friends.some((f) => f.id === data.id)) return;
+        const shielded = data.shieldUntil && data.shieldUntil > V.serverNow();
+        const noArmy = !(S.data?.army?.used > 0);
+        btn.textContent = shielded ? "🛡️ Protégé" : "🤝 Défier";
+        btn.disabled = Boolean(shielded) || noArmy;
+        btn.title = shielded ? "Un ami sous bouclier ne peut pas être défié." : noArmy ? "Ton armée est vide : entraîne des troupes à la Caserma." : "";
+        btn.classList.remove("hidden");
+    }
+
+    async function challenge() {
+        if (!T) return;
+        await V.war.challenge(T.data.id);
+        // La bataille a demarre : on quitte l'ile (en cas de refus, on y reste).
+        if (S.scene === "battle") {
+            T = null;
+            clearTimeout(infoTimer);
+            ui.visit.classList.add("hidden");
+        }
     }
 
     function leave() {
@@ -247,6 +282,7 @@
     ui.visitBtn.addEventListener("click", openList);
     ui.vsList.addEventListener("click", openList);
     ui.vsHome.addEventListener("click", leave);
+    ui.vsFight.addEventListener("click", challenge);
 
     V.visit = { open, openList, leave };
 })();

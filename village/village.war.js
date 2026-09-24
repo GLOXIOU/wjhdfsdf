@@ -1012,6 +1012,11 @@
         ).join("")}</div>${body}`;
     }
 
+    /** Defi amical (menu de guerre ou visite de l'ile d'un ami). */
+    function challenge(friendId) {
+        return launch("/village/war/friendly", { friendId }, "🤝 Préparation du défi amical…");
+    }
+
     V.sheets.war = {
         title: () => "🗡️ Guerre",
         html: warHtml,
@@ -1025,7 +1030,7 @@
             } else if (act === "campaign") {
                 launch("/village/war/campaign", { level: Number(el.dataset.level) }, "🗺️ En route vers les Briganti…");
             } else if (act === "friendly") {
-                launch("/village/war/friendly", { friendId: el.dataset.id }, "🤝 Préparation du défi amical…");
+                challenge(el.dataset.id);
             }
         }
     };
@@ -1077,6 +1082,7 @@
         },
         maybeShowDefenseReport,
         openReplay,
+        challenge,
         /** Onglet cache puis revenu : la bataille en direct rattrape l'horloge toute seule. */
         onVisible() {
             if (B) view.requestDraw();

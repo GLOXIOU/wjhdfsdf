@@ -6,22 +6,13 @@ const joinBtn = document.getElementById('join');
 const roomInput = document.getElementById('room');
 let playerPseudo = 'Player';
 const handEl = document.getElementById('hand');
-const infoEl = document.getElementById('info');
-const opponentEl = document.getElementById('opponent');
 const canvas = document.getElementById('canvas');
-const ctx = canvas.getContext('2d');
 let localPlayerId = localStorage.getItem('playerId') || null;
 let currentRoom = null;
-let draggingCardId = null;
-let draggingEmoji = null;
-let dragPos = null;
-let justDragged = false;
 let selectedDeck = [];
 let currentRoomId = null;
 let isInvitationAccepted = false;
 let isInvitationWaiting = false;
-let isTouchControlMode = true;
-let selectedCardForPlacement = null;
 
 
 
@@ -169,463 +160,50 @@ function initParticleAnimations() {
 // Initialize animations on load
 initParticleAnimations();
 
-function showGameEndedOverlay(winnerId, winnerName, rewards = null){
-  const isWinner = winnerId === localPlayerId;
+function showGameEndedOverlay(payload) {
+  const crowns = payload.crowns || {};
+  const draw = payload.draw || !payload.winnerId;
+  const isWinner = !draw && payload.winnerId === localPlayerId;
+  const myCrowns = crowns[localPlayerId] || 0;
+  const foeId = Object.keys(crowns).find((id) => id !== localPlayerId);
+  const foeCrowns = foeId ? crowns[foeId] || 0 : 0;
+  const rewards = payload.rewards;
+
   const overlay = document.createElement('div');
   overlay.className = 'game-end-overlay';
-
   const content = document.createElement('div');
-  content.className = 'game-end-card ' + (isWinner ? 'game-end-win' : 'game-end-loss');
+  content.className = 'game-end-card ' + (isWinner ? 'game-end-win' : draw ? 'game-end-draw' : 'game-end-loss');
 
   let rewardsHTML = '';
   if (isWinner && rewards) {
-    rewardsHTML = `
-      <div class="game-end-rewards">
-        <div class="rewards-title">🎁 Récompenses</div>
-        <div class="rewards-grid">
-    `;
-    
-    if (rewards.gold) {
-      rewardsHTML += `
-        <div class="reward-item gold-reward">
-          <div class="reward-icon">💰</div>
-          <div class="reward-amount">${rewards.gold}</div>
-          <div class="reward-label">Or</div>
-        </div>
-      `;
-    }
-    
-    if (rewards.chest) {
-      rewardsHTML += `
-        <div class="reward-item chest-reward">
-          <div class="reward-icon">📦</div>
-          <div class="reward-amount">1</div>
-          <div class="reward-label">Coffre</div>
-        </div>
-      `;
-    }
-    
-    if (rewards.exp) {
-      rewardsHTML += `
-        <div class="reward-item exp-reward">
-          <div class="reward-icon">⭐</div>
-          <div class="reward-amount">+${rewards.exp}</div>
-          <div class="reward-label">Exp</div>
-        </div>
-      `;
-    }
-    
-    rewardsHTML += `
-        </div>
-      </div>
-    `;
+    const items = [];
+    if (rewards.gold) items.push(`<div class="reward-item gold-reward"><div class="reward-icon">💰</div><div class="reward-amount">${rewards.gold}</div><div class="reward-label">Or</div></div>`);
+    if (rewards.chest) items.push('<div class="reward-item chest-reward"><div class="reward-icon">📦</div><div class="reward-amount">1</div><div class="reward-label">Coffre</div></div>');
+    if (rewards.exp) items.push(`<div class="reward-item exp-reward"><div class="reward-icon">⭐</div><div class="reward-amount">+${rewards.exp}</div><div class="reward-label">Exp</div></div>`);
+    rewardsHTML = `<div class="game-end-rewards"><div class="rewards-title">🎁 Récompenses</div><div class="rewards-grid">${items.join('')}</div></div>`;
   }
 
-  if (isWinner) {
-    content.innerHTML = `
-      <div class="game-end-emoji">🎉</div>
-      <div class="game-end-title emerald">VICTOIRE!</div>
-      <div class="game-end-sub">Tu as vaincu <strong>${winnerName}</strong></div>
-      ${rewardsHTML}
-    `;
-  } else {
-    content.innerHTML = `<div class="game-end-emoji">😢</div><div class="game-end-title" style="color:#ef4444">DÉFAITE</div><div class="game-end-sub"><strong>${winnerName}</strong> a gagné</div>`;
-  }
+  const title = draw ? 'ÉGALITÉ' : isWinner ? 'VICTOIRE !' : 'DÉFAITE';
+  const emoji = draw ? '🤝' : isWinner ? '🏆' : '💥';
+  const sub = draw
+    ? 'Personne n’a pris l’avantage.'
+    : isWinner ? 'Tu as détruit plus de tours que ton adversaire !' : `<strong>${escapeHtml(payload.winnerName)}</strong> a gagné`;
+  content.innerHTML = `
+    <div class="game-end-emoji">${emoji}</div>
+    <div class="game-end-title">${title}</div>
+    <div class="game-end-score">
+      <div class="cr-crowns is-me">${crownsHtml(myCrowns)}</div>
+      <strong>${myCrowns} – ${foeCrowns}</strong>
+      <div class="cr-crowns">${crownsHtml(foeCrowns)}</div>
+    </div>
+    <div class="game-end-sub">${sub}</div>
+    ${rewardsHTML}
+    <a class="btn-play game-end-back" href="../index/index.html">Retour à l’accueil</a>`;
 
   overlay.appendChild(content);
   document.body.appendChild(overlay);
-
-  setTimeout(() => {
-    window.location.href = `../index/index.html`;
-  }, 3000);
+  setTimeout(() => { window.location.href = '../index/index.html'; }, 6000);
 }
-
-/* ==========================================================================
-   ETAT RESEAU CLIENT
-   --------------------------------------------------------------------------
-   Le serveur n'envoie plus un snapshot complet 10 fois par seconde : il envoie
-   des deltas (spawn / mv / rm). On maintient donc ici une Map d'entites, et
-   chaque entite porte sa propre paire (position precedente -> position cible)
-   pour l'interpolation. Plus aucun JSON.parse(JSON.stringify(...)) par tick,
-   plus aucun filter()/find() dans la boucle de rendu.
-   ========================================================================== */
-
-const NET_INTERP_MS = 110;   // un tick serveur de retard : rendu toujours lisse
-const FADE_OUT_MS = 220;
-
-/** id -> entite interpolable */
-const netEntities = new Map();
-
-function netApplySpawn(list) {
-  const now = performance.now();
-  for (const raw of list) {
-    const existing = netEntities.get(raw.id);
-    if (existing) {
-      Object.assign(existing, raw);
-      continue;
-    }
-    netEntities.set(raw.id, {
-      ...raw,
-      px: raw.x, py: raw.y, php: raw.hp,
-      t0: now, t1: now,
-      anim: 0,
-      removedAt: 0
-    });
-  }
-}
-
-function netApplyMove(deltas) {
-  const now = performance.now();
-  for (let i = 0; i < deltas.length; i++) {
-    const d = deltas[i];
-    const e = netEntities.get(d[0]);
-    if (!e) continue;
-    e.px = e.x; e.py = e.y; e.php = e.hp;
-    e.x = d[1]; e.y = d[2]; e.hp = d[3]; e.anim = d[4];
-    e.t0 = e.t1;
-    e.t1 = now;
-    if (e.t1 - e.t0 > 1000) e.t0 = now; // reprise apres un onglet en veille
-  }
-}
-
-function netApplyRemove(ids) {
-  const now = performance.now();
-  for (const id of ids) {
-    const e = netEntities.get(id);
-    if (e && !e.removedAt) e.removedAt = now; // petit fondu avant disparition
-  }
-}
-
-function netReset() {
-  netEntities.clear();
-}
-
-/* ==========================================================================
-   ENTREES POINTEUR
-   ========================================================================== */
-
-document.addEventListener('pointermove', (ev) => {
-  if (!draggingCardId || isTouchControlMode) return;
-  dragPos = { x: ev.clientX, y: ev.clientY };
-}, { passive: true });
-
-document.addEventListener('pointerup', (ev) => {
-  document.body.classList.remove('is-dragging');
-
-  if (!isTouchControlMode && draggingCardId) {
-    const rect = canvas.getBoundingClientRect();
-    const scaleX = CANVAS_LOGICAL_W / rect.width;
-    const scaleY = CANVAS_LOGICAL_H / rect.height;
-    const x = (ev.clientX - rect.left) * scaleX;
-    const y = (ev.clientY - rect.top) * scaleY;
-    const overCanvas =
-      ev.clientX >= rect.left && ev.clientX <= rect.right &&
-      ev.clientY >= rect.top && ev.clientY <= rect.bottom;
-    if (overCanvas) playCard(draggingCardId, { x: Math.round(x), y: Math.round(y) });
-    else playCard(draggingCardId);
-    draggingCardId = null; draggingEmoji = null; dragPos = null;
-    justDragged = true;
-    setTimeout(() => { justDragged = false; }, 60);
-  }
-});
-
-let shake = { intensity: 0, duration: 0, start: 0 };
-function triggerScreenShake(intensity = 6, duration = 350) {
-  shake.intensity = intensity; shake.duration = duration; shake.start = Date.now();
-}
-
-/* ==========================================================================
-   CANVAS : resolution adaptee a l'ecran
-   --------------------------------------------------------------------------
-   Le canvas gardait une taille fixe de 900x400 pixels quelle que soit la
-   densite d'ecran : flou sur l'ecran Retina de l'iPad. On dessine desormais
-   dans un repere logique 900x400 et on met a l'echelle via le contexte, en
-   plafonnant le devicePixelRatio a 2 pour ne pas exploser le nombre de pixels
-   a remplir (le vrai cout du rendu canvas sur mobile).
-   ========================================================================== */
-
-const CANVAS_LOGICAL_W = 900;
-const CANVAS_LOGICAL_H = 400;
-let canvasScale = 1;
-
-function resizeCanvas() {
-  const dpr = Math.min(window.devicePixelRatio || 1, 2);
-  if (canvasScale === dpr && canvas.width === CANVAS_LOGICAL_W * dpr) return;
-  canvasScale = dpr;
-  canvas.width = Math.round(CANVAS_LOGICAL_W * dpr);
-  canvas.height = Math.round(CANVAS_LOGICAL_H * dpr);
-}
-resizeCanvas();
-window.addEventListener('resize', resizeCanvas, { passive: true });
-
-/* ==========================================================================
-   IMAGES
-   ========================================================================== */
-
-const imageCache = new Map();
-function loadImage(url) {
-  if (!url) return null;
-  const cached = imageCache.get(url);
-  if (cached) return cached;
-
-  const img = new Image();
-  img.decoding = 'async';
-  img.crossOrigin = 'anonymous';
-  img.src = url;
-  img.addEventListener('error', () => { img.failed = true; }, { once: true });
-  imageCache.set(url, img);
-  return img;
-}
-
-function drawEmoji(ctx, x, y, size, emoji) {
-  ctx.font = (size + 6) + 'px serif';
-  ctx.textAlign = 'center';
-  ctx.fillText(emoji || '❓', x, y + size / 3);
-}
-
-function drawImage(ctx, x, y, size, imageUrl, fallbackEmoji) {
-  if (!imageUrl) { drawEmoji(ctx, x, y, size, fallbackEmoji); return; }
-
-  const img = loadImage(imageUrl);
-  if (img && !img.failed && img.complete && img.naturalWidth > 0) {
-    ctx.save();
-    ctx.beginPath();
-    ctx.arc(x, y, size / 2, 0, Math.PI * 2);
-    ctx.clip();
-    ctx.drawImage(img, x - size / 2, y - size / 2, size, size);
-    ctx.restore();
-  } else {
-    drawEmoji(ctx, x, y, size, fallbackEmoji);
-  }
-}
-
-/* ==========================================================================
-   BOUCLE DE RENDU
-   ========================================================================== */
-
-let renderPaused = false;
-document.addEventListener('visibilitychange', () => { renderPaused = document.hidden; });
-
-function drawHpBar(ctx, x, y, hp, maxHp) {
-  const hpRatio = Math.max(0, Math.min(1, (hp || 0) / (maxHp || 10)));
-  const bx = x, by = y, bw = 40, bh = 6, br = 3;
-
-  ctx.save();
-  ctx.shadowColor = 'rgba(0,0,0,0.6)'; ctx.shadowBlur = 4;
-  ctx.fillStyle = 'rgba(0,0,0,0.55)';
-  ctx.beginPath(); ctx.roundRect(bx - 1, by - 1, bw + 2, bh + 2, br + 1); ctx.fill();
-  ctx.shadowBlur = 0;
-  ctx.fillStyle = '#1a1a1a';
-  ctx.beginPath(); ctx.roundRect(bx, by, bw, bh, br); ctx.fill();
-
-  if (hpRatio > 0) {
-    const hpColor = hpRatio > 0.55
-      ? ['#22c55e', '#16a34a', 'rgba(74,222,128,0.7)']
-      : hpRatio > 0.28
-        ? ['#facc15', '#ca8a04', 'rgba(250,204,21,0.7)']
-        : ['#ef4444', '#b91c1c', 'rgba(239,68,68,0.7)'];
-    const gHp = ctx.createLinearGradient(bx, by, bx, by + bh);
-    gHp.addColorStop(0, hpColor[0]);
-    gHp.addColorStop(1, hpColor[1]);
-    ctx.fillStyle = gHp;
-    ctx.beginPath(); ctx.roundRect(bx, by, bw * hpRatio, bh, br); ctx.fill();
-    ctx.shadowColor = hpColor[2]; ctx.shadowBlur = 5;
-    ctx.strokeStyle = 'rgba(255,255,255,0.18)'; ctx.lineWidth = 0.8;
-    ctx.beginPath(); ctx.roundRect(bx, by, bw * hpRatio, bh, br); ctx.stroke();
-    ctx.shadowBlur = 0;
-    ctx.fillStyle = 'rgba(255,255,255,0.22)';
-    ctx.beginPath(); ctx.roundRect(bx + 1, by + 1, (bw * hpRatio - 2) * 0.7, 2, 1); ctx.fill();
-  }
-
-  ctx.font = 'bold 7px Inter, sans-serif';
-  ctx.textAlign = 'center';
-  ctx.fillStyle = 'rgba(255,255,255,0.9)';
-  ctx.shadowColor = 'rgba(0,0,0,0.8)'; ctx.shadowBlur = 3;
-  ctx.fillText(`${Math.ceil(hp || 0)}/${maxHp || 10}`, bx + bw / 2, by + bh - 0.5);
-  ctx.restore();
-}
-
-function drawAttackFlash(ctx, cx, cy, p, dmg) {
-  const r1 = 20 + p * 14, r2 = r1 + 5;
-  ctx.save();
-  const gAtk = ctx.createRadialGradient(cx, cy, r1 * 0.4, cx, cy, r2);
-  gAtk.addColorStop(0, `rgba(255,220,0,${0.7 * p})`);
-  gAtk.addColorStop(0.5, `rgba(255,140,0,${0.4 * p})`);
-  gAtk.addColorStop(1, 'rgba(255,60,0,0)');
-  ctx.fillStyle = gAtk;
-  ctx.beginPath(); ctx.arc(cx, cy, r2, 0, Math.PI * 2); ctx.fill();
-  ctx.strokeStyle = `rgba(255,220,50,${0.85 * p})`;
-  ctx.lineWidth = 2.5;
-  ctx.shadowColor = 'rgba(255,200,0,0.9)';
-  ctx.shadowBlur = 8;
-  ctx.beginPath(); ctx.arc(cx, cy, r1, 0, Math.PI * 2); ctx.stroke();
-  ctx.font = `bold ${10 + p * 4}px Inter, sans-serif`;
-  ctx.textAlign = 'center';
-  ctx.shadowBlur = 6;
-  ctx.shadowColor = 'rgba(255,100,0,0.9)';
-  ctx.fillStyle = `rgba(255,255,80,${p})`;
-  ctx.fillText(dmg ? `-${dmg}` : '!', cx, cy - r1 - 4 - p * 6);
-  ctx.restore();
-}
-
-function renderTick() {
-  requestAnimationFrame(renderTick);
-  // Onglet en arriere-plan : on ne peint rien. Sur iPad cela evite de vider
-  // la batterie et de garder le GPU occupe pendant que le jeu n'est pas vu.
-  if (renderPaused) return;
-
-  const now = Date.now();
-  const nowPerf = performance.now();
-  const renderTime = nowPerf - NET_INTERP_MS;
-
-  let sx = 0, sy = 0;
-  if (shake.duration > 0) {
-    const elapsed = now - shake.start;
-    if (elapsed < shake.duration) {
-      const p = 1 - (elapsed / shake.duration);
-      const mag = shake.intensity * p;
-      sx = (Math.random() * 2 - 1) * mag;
-      sy = (Math.random() * 2 - 1) * mag;
-    } else {
-      shake.duration = 0;
-    }
-  }
-
-  ctx.setTransform(canvasScale, 0, 0, canvasScale, 0, 0);
-  ctx.clearRect(0, 0, CANVAS_LOGICAL_W, CANVAS_LOGICAL_H);
-  ctx.translate(sx, sy);
-
-  // Zone de pose du joueur local.
-  if (currentRoom && currentRoom.players.length > 0) {
-    const me = currentRoom.players.find(p => p.id === localPlayerId);
-    if (me) {
-      const zone = getPlacementZone(me);
-      ctx.save();
-      ctx.fillStyle = '#22c55e';
-      ctx.globalAlpha = 0.15;
-      ctx.fillRect(zone.x, zone.y, zone.w, zone.h);
-      ctx.restore();
-    }
-  }
-
-  // Carte en cours de glisser-deposer (mode souris).
-  if (draggingCardId && dragPos) {
-    const rect = canvas.getBoundingClientRect();
-    const gx = (dragPos.x - rect.left) * (CANVAS_LOGICAL_W / rect.width);
-    const gy = (dragPos.y - rect.top) * (CANVAS_LOGICAL_H / rect.height);
-    if (gx >= 0 && gx <= CANVAS_LOGICAL_W && gy >= 0 && gy <= CANVAS_LOGICAL_H) {
-      let cardLink = '';
-      if (currentRoom) {
-        const me = currentRoom.players.find(p => p.id === localPlayerId);
-        const card = me && me.hand ? me.hand.find(c => c && c.id === draggingCardId) : null;
-        if (card) { cardLink = card.link || ''; draggingEmoji = card.emoji || '❓'; }
-      }
-      ctx.save();
-      ctx.globalAlpha = 0.85;
-      drawImage(ctx, gx, gy, 40, cardLink, draggingEmoji || '❓');
-      ctx.restore();
-    }
-  }
-
-  // Tours.
-  ctx.font = '28px serif';
-  ctx.textAlign = 'left';
-  ctx.fillText('🏰', 8, CANVAS_LOGICAL_H / 2);
-  ctx.textAlign = 'right';
-  ctx.fillText('🏰', CANVAS_LOGICAL_W - 8, CANVAS_LOGICAL_H / 2);
-
-  // --- Entites : un seul parcours de la Map, dans l'ordre aoe > projectile > unit.
-  // L'ancienne version faisait trois filter() plus un find() par entite a
-  // chaque frame, soit un cout quadratique a 60 fps.
-  for (const e of netEntities.values()) {
-    if (e.removedAt) {
-      const age = nowPerf - e.removedAt;
-      if (age > FADE_OUT_MS) { netEntities.delete(e.id); continue; }
-    }
-    if (e.type === 'aoe') drawAoe(ctx, e, nowPerf);
-  }
-  for (const e of netEntities.values()) {
-    if (e.type === 'projectile') drawProjectile(ctx, e, renderTime);
-  }
-  for (const e of netEntities.values()) {
-    if (e.type === 'unit') drawUnit(ctx, e, renderTime);
-  }
-}
-
-/** Interpole la position d'une entite a l'instant de rendu voulu. */
-function interpolate(e, renderTime) {
-  const span = e.t1 - e.t0;
-  if (span <= 0) return { x: e.x, y: e.y, hp: e.hp };
-  let t = (renderTime - e.t0) / span;
-  t = t < 0 ? 0 : t > 1 ? 1 : t;
-  return {
-    x: e.px + (e.x - e.px) * t,
-    y: e.py + (e.y - e.py) * t,
-    hp: e.php + (e.hp - e.php) * t
-  };
-}
-
-function fadeAlpha(e, nowPerf) {
-  if (!e.removedAt) return 1;
-  return Math.max(0, 1 - (nowPerf - e.removedAt) / FADE_OUT_MS);
-}
-
-function drawAoe(ctx, e, nowPerf) {
-  const alpha = fadeAlpha(e, nowPerf);
-  if (alpha <= 0) return;
-  const r = e.radius || 40;
-
-  ctx.save();
-  ctx.globalAlpha = (e.subtype === 'frost' ? 0.18 : e.subtype === 'heal' ? 0.12 : 0.45) * alpha;
-  ctx.fillStyle = e.subtype === 'frost' ? '#59f' : e.subtype === 'heal' ? '#6f6' : 'orange';
-  const radius = e.subtype === 'heal' ? r * (0.9 + 0.1 * Math.sin(nowPerf / 180)) : r;
-  ctx.beginPath(); ctx.arc(e.x, e.y, radius, 0, Math.PI * 2); ctx.fill();
-  ctx.restore();
-
-  ctx.save();
-  ctx.globalAlpha = alpha;
-  const icon = e.subtype === 'frost' ? '❄️' : e.subtype === 'heal' ? '✨' : (e.emoji || '💥');
-  drawImage(ctx, e.x, e.y + 8, e.subtype === 'frost' ? 22 : 24, e.link, icon);
-  ctx.restore();
-}
-
-function drawProjectile(ctx, e, renderTime) {
-  const p = interpolate(e, renderTime);
-  ctx.save();
-  ctx.globalAlpha = 0.95;
-  drawImage(ctx, p.x, p.y, 20, e.link, e.emoji || '➡️');
-  ctx.restore();
-}
-
-function drawUnit(ctx, e, renderTime) {
-  const p = interpolate(e, renderTime);
-  const yOffset = e.isFlying ? -12 : 0;
-  const cx = p.x + 20;
-  const cy = p.y + 28 + yOffset;
-
-  ctx.save();
-  if (e.removedAt) ctx.globalAlpha = fadeAlpha(e, performance.now());
-  drawImage(ctx, cx, cy, 34, e.link, e.emoji || '❓');
-  if (e.anim) drawAttackFlash(ctx, cx, cy, 1, e.dmg);
-  drawHpBar(ctx, p.x + 4, p.y + 2 + yOffset, p.hp, e.maxHp);
-  ctx.restore();
-}
-
-/** Zone de pose autorisee pour un joueur, cote client (le serveur revalide). */
-function getPlacementZone(player) {
-  const index = currentRoom ? currentRoom.players.findIndex(p => p.id === player.id) : 0;
-  if (player.view === 'vertical') {
-    return index === 0
-      ? { x: 0, y: 0, w: CANVAS_LOGICAL_W, h: CANVAS_LOGICAL_H / 2 }
-      : { x: 0, y: CANVAS_LOGICAL_H / 2, w: CANVAS_LOGICAL_W, h: CANVAS_LOGICAL_H / 2 };
-  }
-  return index === 0
-    ? { x: 0, y: 0, w: CANVAS_LOGICAL_W / 2, h: CANVAS_LOGICAL_H }
-    : { x: CANVAS_LOGICAL_W / 2, y: 0, w: CANVAS_LOGICAL_W / 2, h: CANVAS_LOGICAL_H };
-}
-
-requestAnimationFrame(renderTick);
-
 /* ==========================================================================
    TEMPS REEL : socket.io
    --------------------------------------------------------------------------
@@ -668,7 +246,7 @@ function connectGameSocket(roomId) {
   gameSocket.on('connect', () => {
     // A chaque (re)connexion on rejoint la room : le serveur renvoie alors
     // un etat complet, ce qui resynchronise la partie apres une coupure.
-    netReset();
+    Arena.reset();
     gameSocket.emit('join', { roomId: joinedRoomId }, onJoinAck);
   });
 
@@ -683,8 +261,10 @@ function connectGameSocket(roomId) {
       try { localStorage.setItem('playerId', localPlayerId); } catch {}
     }
     currentRoom = data.room;
-    netReset();
-    netApplySpawn(data.room.entities || []);
+    Arena.reset();
+    Arena.setPerspective(localPlayerId, data.room.players || []);
+    Arena.spawn(data.room.entities || []);
+    setClock(data.room.clock);
     applyRoomState(currentRoom);
   });
 
@@ -693,13 +273,15 @@ function connectGameSocket(roomId) {
     if (!currentRoom) currentRoom = { id: joinedRoomId, players: [], entities: [] };
     currentRoom.players = data.players;
     currentRoom.started = data.started;
+    setClock(data.clock);
     if (data.invitation) currentRoom.invitation = data.invitation;
     applyRoomState(currentRoom);
   });
 
-  gameSocket.on('spawn', netApplySpawn);
-  gameSocket.on('mv', netApplyMove);
-  gameSocket.on('rm', netApplyRemove);
+  gameSocket.on('spawn', (list) => Arena.spawn(list));
+  gameSocket.on('mv', (list) => Arena.move(list));
+  gameSocket.on('rm', (ids) => Arena.remove(ids));
+  gameSocket.on('fx', (list) => Arena.fx(list));
 
   gameSocket.on('ended', (payload) => {
     if (!payload) return;
@@ -707,13 +289,14 @@ function connectGameSocket(roomId) {
     window.PlayWebAnalytics?.track(
       payload.winnerId === localPlayerId ? 'match_won' : 'match_lost'
     );
-    showGameEndedOverlay(payload.winnerId, payload.winnerName, payload.rewards);
-    triggerScreenShake(15, 600);
+    selectCard(null);
+    showGameEndedOverlay(payload);
+    Arena.shake(15, 600);
   });
 
   gameSocket.on('effect', (payload) => {
     if (payload && payload.effect === 'screenShake') {
-      triggerScreenShake(payload.intensity || 6, payload.duration || 300);
+      Arena.shake(payload.intensity || 6, payload.duration || 300);
     }
   });
 }
@@ -729,7 +312,7 @@ function disconnectGameSocket() {
   gameSocket.disconnect();
   gameSocket = null;
   joinedRoomId = null;
-  netReset();
+  Arena.reset();
 }
 
 window.addEventListener('pagehide', disconnectGameSocket);
@@ -777,6 +360,7 @@ function applyRoomState(room) {
           invitationModal.style.display = 'none';
           gameEl.style.display = 'block';
           document.body.classList.add('game-active');
+          Arena.start();
           renderRoom(room);
         }, 600);
       }
@@ -1071,181 +655,230 @@ document.getElementById('invite-btn')?.addEventListener('click', async () => {
 })();
 
 /* ==========================================================================
-   INTERFACE DE PARTIE
+   INTERFACE DE PARTIE : HUD (couronnes, chrono, mana), main, pose des cartes
    --------------------------------------------------------------------------
-   renderRoom reconstruisait tout le HUD et toute la main a chaque message du
-   serveur. Sur iPad cela signifiait des dizaines de creations de noeuds et de
-   rechargements d'<img> par seconde : c'etait la cause principale des
-   saccades. Ici, on ne touche au DOM que sur un changement reel.
+   Le DOM n'est touche que lorsqu'une valeur change. Le chrono et la barre de
+   mana avancent en local entre deux messages serveur (10 fois par seconde).
    ========================================================================== */
 
+const hud = {
+  enemyName: document.getElementById('enemy-name'),
+  enemyCrowns: document.getElementById('enemy-crowns'),
+  meName: document.getElementById('me-name'),
+  meCrowns: document.getElementById('me-crowns'),
+  timer: document.getElementById('timer-value'),
+  timerLabel: document.getElementById('timer-label'),
+  elixirFill: document.getElementById('elixir-fill'),
+  elixirCount: document.getElementById('elixir-count'),
+  elixirX2: document.getElementById('elixir-x2'),
+  next: document.getElementById('next-card')
+};
+
 const handCardElements = new Map(); // cardId -> element
+const SPELL_RADIUS = { bomb: 56, molotov: 52, freeze: 66, banana: 50 };
 let lastHudSignature = '';
+let matchClock = null;
+let manaState = { value: 0, at: 0, max: 10 };
+let selectedCard = null;
+let press = null;
+
+function escapeHtml(value) {
+  return String(value ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+}
+
+function crownsHtml(n) {
+  return [0, 1, 2].map((i) => `<span class="${i < n ? 'on' : ''}">👑</span>`).join('');
+}
+
+function setClock(clock) {
+  if (!clock) return;
+  matchClock = { endsAt: clock.endsAt, overtime: clock.overtime, offset: (clock.serverNow || Date.now()) - Date.now() };
+}
 
 function renderRoom(room) {
   if (!room) return;
+  const me = room.players.find((p) => p.id === localPlayerId);
+  const foe = room.players.find((p) => p.id !== localPlayerId);
+  Arena.setPerspective(localPlayerId, room.players);
 
-  const me = room.players.find(p => p.id === localPlayerId);
-  if (me) localPlayerId = me.id;
-  const opponent = room.players.find(p => p.id !== localPlayerId) || { name: 'Waiting...', hp: '-' };
-
-  const mana = me ? (me.mana || 0) : 0;
-  const maxMana = me ? (me.maxMana || 10) : 10;
-
-  // Le HUD n'est reecrit que si une de ses valeurs a change.
-  const hudSignature = `${opponent.name}|${opponent.hp}|${me ? me.name : ''}|${me ? me.hp : '-'}|${mana}|${maxMana}`;
-  if (hudSignature !== lastHudSignature) {
-    lastHudSignature = hudSignature;
-
-    opponentEl.innerHTML =
-      `<span style="font-size:0.75rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.05em;">Adversaire</span><br>` +
-      `<span style="font-weight:900;font-size:1.1rem;">${opponent.name}</span> ` +
-      `<span class="emerald" style="font-size:0.9rem;">❤️ ${opponent.hp}</span>`;
-
-    let manaPips = '';
-    for (let i = 0; i < maxMana; i++) manaPips += `<div class="mana-pip ${i < mana ? 'filled' : ''}"></div>`;
-    infoEl.innerHTML =
-      `<span style="font-size:0.75rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.05em;">Toi</span><br>` +
-      `<span style="font-weight:900;font-size:1.1rem;">${me ? me.name : ''}</span> ` +
-      `<span style="color:#ef4444;font-size:0.9rem;">❤️ ${me ? me.hp : '-'}</span>` +
-      `<div class="mana-bar" style="justify-content:center;margin-top:6px;">${manaPips}</div>`;
+  const signature = `${foe ? foe.name : ''}|${foe ? foe.crowns : 0}|${me ? me.name : ''}|${me ? me.crowns : 0}`;
+  if (signature !== lastHudSignature) {
+    lastHudSignature = signature;
+    hud.enemyName.textContent = foe ? foe.name : 'Adversaire';
+    hud.enemyCrowns.innerHTML = crownsHtml(foe ? foe.crowns || 0 : 0);
+    hud.meName.textContent = me ? me.name : 'Toi';
+    hud.meCrowns.innerHTML = crownsHtml(me ? me.crowns || 0 : 0);
   }
-
+  if (me && me.mana !== manaState.value) manaState = { value: me.mana, at: performance.now(), max: me.maxMana || 10 };
   renderHand(me);
+  renderNext(me);
+}
+
+function cardFace(card, small = false) {
+  const art = card.link
+    ? `<img src="${escapeHtml(card.link)}" alt="" loading="lazy" decoding="async" draggable="false">`
+    : `<span class="cr-card-emoji">${escapeHtml(card.emoji || '❓')}</span>`;
+  return `<span class="cr-card-cost">${card.cost}</span>${art}${small ? '' : `<span class="cr-card-name">${escapeHtml(card.name)}</span>`}`;
 }
 
 function renderHand(me) {
   const hand = me && Array.isArray(me.hand) ? me.hand.filter(Boolean) : [];
-  const handIds = new Set(hand.map(c => c.id));
+  const ids = new Set(hand.map((c) => c.id));
+  if (selectedCard && !ids.has(selectedCard.id)) selectCard(null);
 
-  if (selectedCardForPlacement && !handIds.has(selectedCardForPlacement)) {
-    selectedCardForPlacement = null;
-    canvas.classList.remove('touch-mode-active');
-  }
-
-  // Retrait des cartes qui ont quitte la main.
   for (const [cardId, el] of handCardElements) {
-    if (!handIds.has(cardId)) {
+    if (!ids.has(cardId)) {
       el.remove();
       handCardElements.delete(cardId);
     }
   }
-
-  const mana = me ? (me.mana || 0) : 0;
-
+  const mana = me ? me.mana || 0 : 0;
   hand.forEach((card, index) => {
     let el = handCardElements.get(card.id);
-
     if (!el) {
       el = buildHandCard(card);
       handCardElements.set(card.id, el);
-      handEl.appendChild(el);
     }
-
-    // Seules les classes d'etat sont mises a jour : pas de reconstruction,
-    // donc pas de rechargement d'image ni de perte de l'animation en cours.
-    const affordable = mana >= card.cost;
-    el._affordable = affordable;
-    el.classList.toggle('card-unaffordable', !affordable);
-    el.classList.toggle('card-selected', selectedCardForPlacement === card.id);
-
-    // Respect de l'ordre de la main sans toucher aux noeuds inchanges.
-    const current = handEl.children[index];
-    if (current !== el) handEl.insertBefore(el, current || null);
+    el.classList.toggle('card-unaffordable', card.cost > mana);
+    el.classList.toggle('card-selected', !!selectedCard && selectedCard.id === card.id);
+    if (handEl.children[index] !== el) handEl.insertBefore(el, handEl.children[index] || null);
   });
+}
 
-  if (selectedCardForPlacement) canvas.classList.add('touch-mode-active');
+function renderNext(me) {
+  const next = me && me.next;
+  const key = next ? next.id : '';
+  if (hud.next.dataset.id === key) return;
+  hud.next.dataset.id = key;
+  hud.next.innerHTML = next ? cardFace(next, true) : '';
 }
 
 function buildHandCard(card) {
-  const el = document.createElement('div');
-  el.className = 'btn-card hand-card';
+  const el = document.createElement('button');
+  el.type = 'button';
+  el.className = 'cr-card' + (card.type === 'spell' ? ' is-spell' : '');
   el.dataset.cardId = card.id;
-  el._affordable = true;
-
-  const cardImage = card.link
-    ? `<img src="${card.link}" loading="lazy" decoding="async" style="width:72px; height:72px; object-fit:cover; border-radius:6px; display:block; flex-shrink:0;">`
-    : `<div class="card-emoji">${card.emoji || '❓'}</div>`;
-  const cardName = card.name || (card.card && card.card.name) || '';
-  const cardCost = card.cost ?? (card.card && card.card.cost) ?? 0;
-  el.innerHTML = `<div class="card-cost">${cardCost}</div>${cardImage}<div class="card-name">${cardName}</div>`;
-
+  el._cost = card.cost;
+  const role = Arena.roleOf(card);
+  el.title = `${card.name} · ${role.label}`;
+  el.innerHTML = cardFace(card) + `<span class="cr-card-role">${role.label.split(' ')[0]}${role.flying ? '🪽' : ''}</span>`;
   el.addEventListener('pointerdown', (ev) => {
-    if (!el._affordable) return;
+    if (ev.button !== undefined && ev.button !== 0) return;
     if (ev.pointerType === 'touch') ev.preventDefault();
-
-    if (isTouchControlMode) {
-      if (selectedCardForPlacement === card.id) {
-        selectedCardForPlacement = null;
-        el.classList.remove('card-selected');
-        canvas.classList.remove('touch-mode-active');
-        playCardDeselectEffect(el);
-      } else {
-        for (const other of handCardElements.values()) other.classList.remove('card-selected');
-        selectedCardForPlacement = card.id;
-        el.classList.add('card-selected');
-        canvas.classList.add('touch-mode-active');
-        playCardSelectEffect(el);
-      }
-    } else {
-      document.body.classList.add('is-dragging');
-      draggingCardId = card.id;
-      draggingEmoji = card.emoji || '❓';
-      dragPos = { x: ev.clientX, y: ev.clientY };
-    }
-  }, { passive: false });
-
-  el.addEventListener('dragstart', (ev) => ev.preventDefault());
-
-  el.addEventListener('click', () => {
-    if (el._affordable && !justDragged && !isTouchControlMode) playCard(card.id);
+    press = { card, x: ev.clientX, y: ev.clientY, dragging: false, wasSelected: !!selectedCard && selectedCard.id === card.id };
+    selectCard(card);
+    playCardSelectEffect(el);
   });
-
+  el.addEventListener('dragstart', (ev) => ev.preventDefault());
   return el;
 }
+
+function selectCard(card) {
+  selectedCard = card || null;
+  for (const el of handCardElements.values()) el.classList.toggle('card-selected', !!card && el.dataset.cardId === card.id);
+  Arena.setPlacement(card ? { ...card, radius: SPELL_RADIUS[card.effect] || 55 } : null);
+}
+
+function overCanvas(ev) {
+  const r = canvas.getBoundingClientRect();
+  return ev.clientX >= r.left && ev.clientX <= r.right && ev.clientY >= r.top && ev.clientY <= r.bottom;
+}
+
+function tryPlay(card, pos) {
+  if (!card || !pos) return;
+  if (!Arena.canPlace(card, pos)) {
+    showGameToast(card.type === 'spell' ? 'Vise un endroit de l’arène !' : 'Pose tes unités de ton côté de la rivière !');
+    return;
+  }
+  playCard(card.id, pos);
+  selectCard(null);
+}
+
+// Glisser-deposer (doigt ou souris) : la carte suit le pointeur au-dessus de l'arene.
+document.addEventListener('pointermove', (ev) => {
+  if (press && !press.dragging && Math.hypot(ev.clientX - press.x, ev.clientY - press.y) > 12) {
+    press.dragging = true;
+    document.body.classList.add('is-dragging');
+  }
+  if (!selectedCard) return;
+  Arena.setHover(overCanvas(ev) ? Arena.toView(ev.clientX, ev.clientY) : null);
+}, { passive: true });
+
+document.addEventListener('pointerup', (ev) => {
+  const p = press;
+  press = null;
+  document.body.classList.remove('is-dragging');
+  if (!p) return;
+  if (p.dragging) {
+    if (overCanvas(ev)) tryPlay(p.card, Arena.toWorld(ev.clientX, ev.clientY));
+    else Arena.setHover(null);
+  } else if (p.wasSelected) {
+    // Deuxieme toucher sur la meme carte : on la repose.
+    selectCard(null);
+  }
+});
+
+// Toucher l'arene avec une carte choisie : on la joue a cet endroit.
+canvas.addEventListener('pointerup', (ev) => {
+  if (press || !selectedCard) return;
+  tryPlay(selectedCard, Arena.toWorld(ev.clientX, ev.clientY));
+});
+
+function perPointMs() {
+  if (!matchClock) return 1400;
+  const left = matchClock.endsAt - (Date.now() + matchClock.offset);
+  return matchClock.overtime || left <= 60000 ? 700 : 1400;
+}
+
+let lastTimerText = '';
+function updateHudClock() {
+  if (document.hidden || gameEl.style.display !== 'block') return;
+  if (matchClock) {
+    const left = Math.max(0, matchClock.endsAt - (Date.now() + matchClock.offset));
+    const s = Math.ceil(left / 1000);
+    const text = `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
+    if (text !== lastTimerText) {
+      lastTimerText = text;
+      hud.timer.textContent = text;
+    }
+    const double = matchClock.overtime || left <= 60000;
+    const label = matchClock.overtime ? 'Prolongation' : double ? 'Mana x2' : 'Temps';
+    if (hud.timerLabel.textContent !== label) hud.timerLabel.textContent = label;
+    hud.timer.classList.toggle('is-hot', matchClock.overtime || left <= 30000);
+    hud.elixirX2.classList.toggle('hidden', !double);
+  }
+  const max = manaState.max || 10;
+  const partial = manaState.value >= max ? 0 : Math.min(0.98, (performance.now() - manaState.at) / perPointMs());
+  hud.elixirFill.style.transform = `scaleX(${Math.min(1, (manaState.value + partial) / max)})`;
+  const count = String(manaState.value);
+  if (hud.elixirCount.textContent !== count) hud.elixirCount.textContent = count;
+}
+setInterval(updateHudClock, 100);
 
 /* ==========================================================================
    JOUER UNE CARTE
    --------------------------------------------------------------------------
    Passe par la socket deja authentifiee. Le serveur revalide le mana, la zone
-   et la possession de la carte : la verification ci-dessous n'est la que pour
-   un retour immediat, elle n'est pas une source de verite.
+   et la possession de la carte : la verification locale n'est la que pour un
+   retour immediat.
    ========================================================================== */
 
 function playCard(cardId, targetPos) {
   if (!currentRoom || !localPlayerId) return;
-
-  const me = currentRoom.players.find(p => p.id === localPlayerId);
-  if (!me || !Array.isArray(me.hand)) return;
-
-  const card = me.hand.find(c => c && c.id === cardId);
+  const me = currentRoom.players.find((p) => p.id === localPlayerId);
+  const card = me && Array.isArray(me.hand) ? me.hand.find((c) => c && c.id === cardId) : null;
   if (!card) return;
-
   if ((me.mana || 0) < card.cost) {
     showGameToast('Pas assez de mana pour cette carte !');
     return;
   }
-
-  if (card.type === 'unit' && targetPos && !isValidPlacement(me, targetPos)) {
-    showGameToast('Tu ne peux placer des cartes que sur ta zone de jeu !');
-    return;
-  }
-
   if (!gameSocket || !gameSocket.connected) {
     showGameToast('Connexion perdue, reconnexion en cours...');
     return;
   }
-
-  const payload = { cardId };
-  if (targetPos) payload.targetPos = targetPos;
-
   window.PlayWebAnalytics?.track('card_played');
-
-  gameSocket.emit('play', payload, (res) => {
-    if (res && res.ok === false) {
-      console.warn('Carte refusee :', res.error);
-      showGameToast(res.error || 'Action refusée');
-    }
+  gameSocket.emit('play', { cardId, targetPos }, (res) => {
+    if (res && res.ok === false) showGameToast(res.error || 'Action refusée');
   });
 }
 
@@ -1259,26 +892,14 @@ function showGameToast(text) {
   if (!toast) {
     toast = document.createElement('div');
     toast.id = 'game-toast';
-    toast.style.cssText =
-      'position:fixed;left:50%;bottom:24px;transform:translateX(-50%);z-index:9999;' +
-      'padding:10px 18px;border-radius:999px;font-weight:700;font-size:0.9rem;' +
-      'background:rgba(15,15,20,0.92);color:#fff;box-shadow:0 8px 24px rgba(0,0,0,0.4);' +
-      'pointer-events:none;opacity:0;transition:opacity .18s ease;max-width:90vw;text-align:center;';
+    toast.className = 'cr-toast';
     document.body.appendChild(toast);
   }
   toast.textContent = text;
-  toast.style.opacity = '1';
+  toast.classList.add('is-on');
   clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => { toast.style.opacity = '0'; }, 2200);
+  toastTimer = setTimeout(() => toast.classList.remove('is-on'), 2200);
 }
-
-function isValidPlacement(player, targetPos) {
-  if (!player || !targetPos) return true;
-  const zone = getPlacementZone(player);
-  return targetPos.x >= zone.x && targetPos.x < zone.x + zone.w &&
-         targetPos.y >= zone.y && targetPos.y < zone.y + zone.h;
-}
-
 async function fetchAvailableCards() {
   try {
     const token = window.BrainrotAuth?.getToken?.() || '';
@@ -1331,7 +952,7 @@ function renderDeckSelector(availableCards) {
     cardEl.className = 'deck-card btn-card';
     cardEl.dataset.key = key;
 
-    const typeLabel = card.type === 'spell' ? '🔮 Sort' : '⚔️ Unité';
+    const typeLabel = Arena.roleOf(card).label;
     const inSaved = savedKeys.includes(key);
 
     // Afficher image si disponible, sinon emoji
@@ -1652,49 +1273,3 @@ async function handleRejectInvitation(joinData) {
     console.error('Reject error:', e);
   }
 }
-
-// Touch mode: canvas click/touch handler for card placement
-function handleCanvasPlacement(ev) {
-  if (!isTouchControlMode || !selectedCardForPlacement || !currentRoom) return;
-  
-  // Prevent default for touchend to avoid double-clicks
-  if (ev.type === 'touchend') {
-    ev.preventDefault();
-  }
-  
-  const rect = canvas.getBoundingClientRect();
-  const scaleX = canvas.width / rect.width;
-  const scaleY = canvas.height / rect.height;
-  
-  // Get position from either mouse or touch event
-  let clientX, clientY;
-  if (ev.touches && ev.touches.length > 0) {
-    clientX = ev.touches[0].clientX;
-    clientY = ev.touches[0].clientY;
-  } else if (ev.changedTouches && ev.changedTouches.length > 0) {
-    // For touchend, use changedTouches
-    clientX = ev.changedTouches[0].clientX;
-    clientY = ev.changedTouches[0].clientY;
-  } else {
-    clientX = ev.clientX;
-    clientY = ev.clientY;
-  }
-  
-  const x = (clientX - rect.left) * scaleX;
-  const y = (clientY - rect.top) * scaleY;
-  
-  const cardId = selectedCardForPlacement;
-  
-  // Clear selection immediately for UX
-  selectedCardForPlacement = null;
-  canvas.classList.remove('touch-mode-active');
-  handEl.querySelectorAll('.hand-card').forEach(card => {
-    card.classList.remove('card-selected');
-  });
-  
-  // Play card at clicked position (async, but don't wait for response)
-  playCard(cardId, { x: Math.round(x), y: Math.round(y) }).catch(err => console.error('Play card error:', err));
-}
-
-canvas.addEventListener('click', handleCanvasPlacement);
-canvas.addEventListener('touchend', handleCanvasPlacement, { passive: false });
