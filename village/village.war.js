@@ -966,12 +966,20 @@
             return `<p class="v-empty">Ajoute des amis depuis ton profil pour pouvoir les défier !</p>`;
         }
         const noArmy = S.data.army.used <= 0;
-        return `<p class="v-shop-meta">Défi amical : attaque le village d'un ami pour t'entraîner. Aucun butin, aucun trophée, et tes troupes te sont rendues.</p>
-            ${list.map((f) => `<div class="v-rank">
-                <span class="v-rank-pos">${f.league?.emoji || "🌱"}</span>
-                <span class="v-rank-name">${esc(f.pseudo)}<small>${f.hasVillage ? `Palazzo ${f.th} · 🏆 ${f.trophies}` : "pas encore de Villaggio"}</small></span>
-                <button class="v-btn v-btn-small v-btn-army" type="button" data-act="friendly" data-id="${esc(f.id)}"${!f.hasVillage || noArmy ? " disabled" : ""}>🤝 Défier</button>
-            </div>`).join("")}`;
+        const now = V.serverNow();
+        return `<p class="v-shop-meta">Défi amical : attaque le village d'un ami pour t'entraîner. Aucun butin, aucun trophée, et tes troupes te sont rendues. Un ami sous bouclier ne peut pas être défié.</p>
+            ${list.map((f) => {
+                const shielded = f.shieldUntil && f.shieldUntil > now;
+                const info = !f.hasVillage ? "pas encore de Villaggio"
+                    : shielded ? `🛡️ protégé encore ${fmtDur((f.shieldUntil - now) / 1000)}`
+                        : `Palazzo ${f.th} · 🏆 ${f.trophies}`;
+                return `<div class="v-rank">
+                    <span class="v-rank-pos">${f.league?.emoji || "🌱"}</span>
+                    <span class="v-rank-name">${esc(f.pseudo)}<small>${info}</small></span>
+                    ${f.hasVillage ? `<button class="v-btn v-btn-small" type="button" data-act="visit" data-id="${esc(f.id)}" aria-label="Visiter l'île de ${esc(f.pseudo)}">🏝️</button>` : ""}
+                    <button class="v-btn v-btn-small v-btn-army" type="button" data-act="friendly" data-id="${esc(f.id)}"${!f.hasVillage || noArmy || shielded ? " disabled" : ""}>${shielded ? "🛡️ Protégé" : "🤝 Défier"}</button>
+                </div>`;
+            }).join("")}`;
     }
 
     /** Charge (une fois par ouverture) les donnees d'un onglet du menu. */

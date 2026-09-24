@@ -98,6 +98,7 @@
         if (e.key !== "Escape") return;
         if (S.sheet) V.closeSheet();
         else if (S.scene === "home") V.home.escape();
+        else if (S.scene === "visit") V.visit.leave();
     });
 
     ui.errorRetry.addEventListener("click", boot);

@@ -7,6 +7,7 @@
      village.render.js  camera isometrique, gestes, dessin du terrain et des batiments
      village.home.js    ton village : selection, boutique, armee, laboratoire
      village.war.js     la guerre : menu, reperage, bataille, replays, resultats
+     village.visit.js   visiter l'ile des autres joueurs (recherche, amis epingles)
      village.boot.js    demarrage, horloges, evenements globaux
 
    Le serveur fait autorite sur tout (couts, temps, recoltes, placement,
@@ -52,7 +53,7 @@
         builders: "v-builders", buildersPill: "v-builders-pill",
         toasts: "v-toasts",
         bottom: "v-bottom", collectAll: "v-collect-all", collectCount: "v-collect-count",
-        helpBtn: "v-help-btn", armyBtn: "v-army-btn", armyCount: "v-army-count",
+        helpBtn: "v-help-btn", visitBtn: "v-visit-btn", armyBtn: "v-army-btn", armyCount: "v-army-count",
         buildBtn: "v-build-btn", attackBtn: "v-attack-btn", attackBadge: "v-attack-badge",
         selbar: "v-selbar", selEmoji: "v-sel-emoji", selName: "v-sel-name", selLevel: "v-sel-level",
         selClose: "v-sel-close", selStatus: "v-sel-status", selActions: "v-sel-actions",
@@ -64,6 +65,8 @@
         btTimerLabel: "v-bt-timer-label", btTimer: "v-bt-timer", btStars: "v-bt-stars", btPct: "v-bt-pct",
         btLooted: "v-bt-looted", btTroops: "v-bt-troops", btHint: "v-bt-hint",
         btNext: "v-bt-next", btEnd: "v-bt-end", btSpeed: "v-bt-speed",
+        visit: "v-visit", vsTop: "v-vs-top", vsBottom: "v-vs-bottom", vsName: "v-vs-name", vsSub: "v-vs-sub",
+        vsList: "v-vs-list", vsHome: "v-vs-home",
         loading: "v-loading", loadingText: "v-loading-text",
         error: "v-error", errorText: "v-error-text", errorRetry: "v-error-retry"
     };
@@ -379,7 +382,7 @@
     /* ======================================================================
        PANNEAUX DU BAS (feuilles)
        Chaque type de feuille s'enregistre dans V.sheets :
-         { title(sheet), html(sheet), onAct?(act, el, sheet), onClose?(sheet) }
+         { title(sheet), html(sheet), onAct?(act, el, sheet), onClose?(sheet), keepOnState? }
        ====================================================================== */
 
     V.sheets = {};
@@ -422,7 +425,8 @@
     }
 
     function rerenderSheet() {
-        if (!S.sheet) return;
+        // keepOnState : feuille independante de l'etat du village, qui se met a jour elle-meme.
+        if (!S.sheet || V.sheets[S.sheet.kind]?.keepOnState) return;
         const scroll = V.ui.sheetBody.scrollTop;
         renderSheet();
         V.ui.sheetBody.scrollTop = scroll;

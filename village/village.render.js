@@ -89,10 +89,10 @@
         const box = ui.app.getBoundingClientRect();
         let top = 0;
         let bottom = 0;
-        for (const el of [ui.nav, ui.top, ui.btTop]) {
+        for (const el of [ui.nav, ui.top, ui.btTop, ui.vsTop]) {
             if (isShown(el)) top = Math.max(top, el.getBoundingClientRect().bottom - box.top);
         }
-        for (const el of [ui.bottom, ui.btBottom]) {
+        for (const el of [ui.bottom, ui.btBottom, ui.vsBottom]) {
             if (isShown(el)) bottom = Math.max(bottom, box.bottom - el.getBoundingClientRect().top);
         }
         return { top, bottom };

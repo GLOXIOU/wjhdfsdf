@@ -71,6 +71,10 @@
                 <span class="v-count" id="v-collect-count"></span>
             </button>
             <button class="v-btn v-btn-icon" id="v-help-btn" type="button" aria-label="Comment ça marche ?">❔</button>
+            <button class="v-btn v-btn-visit" id="v-visit-btn" type="button">
+                <span aria-hidden="true">🏝️</span>
+                <span class="v-label">Visiter</span>
+            </button>
             <button class="v-btn v-btn-army" id="v-army-btn" type="button">
                 <span aria-hidden="true">⚔️</span>
                 <span class="v-label">Armée</span>
@@ -147,6 +151,20 @@
             </div>
         </div>
 
+        <!-- ===== Visite de l'ile d'un autre joueur (lecture seule) ===== -->
+        <div class="v-visit hidden" id="v-visit">
+            <div class="v-vs-top" id="v-vs-top">
+                <div class="v-bt-panel v-vs-info">
+                    <strong id="v-vs-name"></strong>
+                    <span id="v-vs-sub"></span>
+                </div>
+            </div>
+            <div class="v-vs-bottom" id="v-vs-bottom">
+                <button class="v-btn" id="v-vs-list" type="button">🏝️ Autre île</button>
+                <button class="v-btn v-btn-confirm v-btn-big" id="v-vs-home" type="button">🏰 Mon village</button>
+            </div>
+        </div>
+
         <!-- Panneau du bas (boutique, details, armee, guerre, resultats...) -->
         <div class="v-sheet-backdrop hidden" id="v-sheet-backdrop"></div>
         <section class="v-sheet" id="v-sheet" role="dialog" aria-modal="true" aria-hidden="true" aria-labelledby="v-sheet-title">
@@ -214,6 +232,7 @@
     <script src="village.render.js"></script>
     <script src="village.home.js"></script>
     <script src="village.war.js"></script>
+    <script src="village.visit.js"></script>
     <script src="village.boot.js"></script>
 </body>
 </html>

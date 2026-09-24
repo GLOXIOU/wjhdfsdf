@@ -1487,6 +1487,8 @@
         S.mode = "view";
         S.ghost = null;
         ui.top.classList.remove("hidden");
+        // Visible avant le cadrage : la camera laisse la place a la barre du bas.
+        ui.bottom.classList.remove("hidden");
         ui.battle.classList.add("hidden");
         view.setScene(homeScene);
         view.centerCamera();

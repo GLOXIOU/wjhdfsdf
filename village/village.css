@@ -164,6 +164,7 @@ a {
 .v-btn-gold,
 .v-btn-attack,
 .v-btn-army,
+.v-btn-visit,
 .v-btn-magic {
     border: none;
     border-bottom: 4px solid rgba(0, 0, 0, 0.35);
@@ -182,6 +183,11 @@ a {
 .v-btn-army {
     background: linear-gradient(135deg, #0ea5e9, #2563eb);
     box-shadow: 0 10px 26px rgba(37, 99, 235, 0.3);
+}
+
+.v-btn-visit {
+    background: linear-gradient(135deg, #2dd4bf, #0f766e);
+    box-shadow: 0 10px 26px rgba(13, 148, 136, 0.3);
 }
 
 .v-btn-magic {
@@ -1919,6 +1925,126 @@ a {
 
 .v-battle.is-over .v-bt-troops {
     opacity: 0.5;
+}
+
+/* --- Visites ----------------------------------------------------------------------- */
+
+/* Champ de recherche : 16 px minimum, sinon Safari zoome toute la page au toucher. */
+.v-search {
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    margin: 0 0 0.7rem;
+    padding: 0 0.9rem;
+    min-height: 52px;
+    border-radius: 16px;
+    background: #1c1c1c;
+    border: 1px solid var(--v-border-strong);
+}
+
+.v-search:focus-within {
+    border-color: var(--v-orange);
+}
+
+.v-search input {
+    flex: 1;
+    min-width: 0;
+    height: 50px;
+    border: none;
+    outline: none;
+    background: transparent;
+    color: #fff;
+    font-size: 16px;
+    font-weight: 700;
+    -webkit-user-select: text;
+    user-select: text;
+    -webkit-appearance: none;
+    appearance: none;
+}
+
+.v-search input::placeholder {
+    color: var(--v-muted);
+}
+
+.v-player {
+    width: 100%;
+    text-align: left;
+    color: inherit;
+    cursor: pointer;
+    min-height: 58px;
+    transition: transform 0.12s ease, border-color 0.15s ease;
+}
+
+.v-player:active {
+    transform: scale(0.98);
+    border-color: rgba(45, 212, 191, 0.7);
+}
+
+.v-player.is-off {
+    opacity: 0.55;
+    cursor: default;
+}
+
+.v-player-go {
+    flex: none;
+    font-size: 0.85rem;
+    font-weight: 900;
+    color: #5eead4;
+}
+
+.v-visit {
+    position: absolute;
+    inset: 0;
+    z-index: 22;
+    pointer-events: none;
+}
+
+.v-vs-top {
+    position: absolute;
+    top: calc(var(--v-nav-bottom) + 10px);
+    left: var(--v-side);
+    right: var(--v-side);
+    display: flex;
+}
+
+.v-vs-info {
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+    max-width: min(80vw, 480px);
+}
+
+.v-vs-info strong {
+    font-size: 1.1rem;
+    font-weight: 900;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.v-vs-info span {
+    font-size: 0.85rem;
+    font-weight: 800;
+    color: var(--v-muted);
+}
+
+.v-vs-bottom {
+    position: absolute;
+    left: var(--v-side);
+    right: var(--v-side);
+    bottom: calc(var(--v-safe-bottom) + 14px);
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    gap: 0.65rem;
+}
+
+.v-vs-bottom .v-btn {
+    min-height: 60px;
+    pointer-events: auto;
 }
 
 /* --- Notifications ------------------------------------------------------------ */
