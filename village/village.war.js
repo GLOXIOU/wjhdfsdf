@@ -80,6 +80,8 @@
             info: null,
             lastHudTick: -1,
             lastHudAt: 0,
+            hudStars: -1,
+            troopLayout: "",
             // Replay
             speed: 1,
             simTime: 0,
@@ -277,15 +279,20 @@
                 info.combat.targets === "air" ? "rgba(56,189,248,ALPHA)" : info.combat.targets === "both" ? "rgba(250,204,21,ALPHA)" : "rgba(251,146,60,ALPHA)");
         }
 
+        let wallsChanged = false;
         for (const it of B.items) {
             const b = it.ref;
-            it.destroyed = b.destroyed;
+            if (it.destroyed !== b.destroyed) {
+                it.destroyed = b.destroyed;
+                if (b.kind === "wall") wallsChanged = true;
+            }
             it.hp = b.hp;
             it.maxHp = b.kind === "building" ? b.maxHp : 0;
             it.trapState = b.trapState;
             it.inactive = b.kind === "building" && b.combat && !b.active;
         }
-        view.linkWalls(B.items);
+        // Les murs ne se relient qu'au debut et quand l'un d'eux tombe, pas a chaque image.
+        if (wallsChanged) view.linkWalls(B.items);
 
         // Interpolation entre les deux derniers ticks
         const alpha = B.kind === "live"
@@ -305,14 +312,15 @@
                     for (const u of behind) pending.delete(u);
                 }
             }
-            view.drawBuilding(it, { hideTraps: true });
+            view.drawBuilding(it, { hideTraps: true, sprites: true });
         }
         drawUnits([...pending], alpha);
         drawUnits(air, alpha);
 
         const vt = visualTime() - 1;
         for (const p of B.projectiles) {
-            view.drawProjectile({ ...p, t: (vt - p.start) / (p.end - p.start) });
+            p.t = (vt - p.start) / (p.end - p.start);
+            view.drawProjectile(p);
         }
 
         if (info) {
@@ -609,20 +617,38 @@
        HUD DE BATAILLE
        ====================================================================== */
 
+    /** N'ecrit dans le DOM que ce qui change : pas de mise en page inutile 10 fois par seconde. */
+    function setText(el, text) {
+        if (el.textContent !== text) el.textContent = text;
+    }
+
     function renderTroopBar() {
         if (!B) return;
         const battle = B.battle;
         const types = troopOrder(Object.keys(battle.remaining));
         const live = isLive() && (B.phase === "scout" || B.phase === "fight");
-        ui.btTroops.innerHTML = types.map((type) => {
-            const t = V.troop(type);
+        const layout = types.join(",");
+        if (B.troopLayout !== layout) {
+            B.troopLayout = layout;
+            ui.btTroops.innerHTML = types.map((type) => {
+                const t = V.troop(type);
+                const level = B.data.scenario.troops[type]?.level || 1;
+                return `<button class="v-bt-troop" type="button" data-type="${type}">
+                    <span class="v-bt-troop-emoji" aria-hidden="true">${t?.emoji || "❔"}</span>
+                    <b></b><small>niv. ${level}</small>
+                </button>`;
+            }).join("");
+        }
+        // Chaque troupe posee ne touche que son compteur, sans reconstruire la barre.
+        for (const btn of ui.btTroops.children) {
+            const type = btn.dataset.type;
             const left = battle.remaining[type];
-            const level = B.data.scenario.troops[type]?.level || 1;
-            return `<button class="v-bt-troop${type === B.selected && live ? " is-selected" : ""}${left <= 0 ? " is-empty" : ""}" type="button" data-type="${type}"${!live || left <= 0 ? " disabled" : ""}>
-                <span class="v-bt-troop-emoji" aria-hidden="true">${t?.emoji || "❔"}</span>
-                <b>×${left}</b><small>niv. ${level}</small>
-            </button>`;
-        }).join("");
+            const off = !live || left <= 0;
+            btn.classList.toggle("is-selected", type === B.selected && live);
+            btn.classList.toggle("is-empty", left <= 0);
+            if (btn.disabled !== off) btn.disabled = off;
+            setText(btn.querySelector("b"), `×${left}`);
+        }
     }
 
     function renderHud(full = false) {
@@ -671,24 +697,27 @@
         const lootLeft = Math.max(0, battle.lootAvailable - res.loot);
         if (B.kind === "live" && data.mode === "campaign") {
             const per = data.campaign.reward / 3;
-            ui.btLoot.textContent = `⭐ 🪙 ${fmt(per)} par nouvelle étoile`;
+            setText(ui.btLoot, `⭐ 🪙 ${fmt(per)} par nouvelle étoile`);
         } else if (battle.lootAvailable > 0) {
-            ui.btLoot.textContent = `🪙 ${fmt(lootLeft)} à piller`;
+            setText(ui.btLoot, `🪙 ${fmt(lootLeft)} à piller`);
         } else {
-            ui.btLoot.textContent = B.kind === "live" && (data.mode === "ranked" || data.mode === "revenge") ? "Mines vides : rien à piller" : "";
+            setText(ui.btLoot, B.kind === "live" && (data.mode === "ranked" || data.mode === "revenge") ? "Mines vides : rien à piller" : "");
         }
-        ui.btLooted.textContent = res.loot > 0 ? `+🪙 ${fmt(res.loot)}` : "";
+        setText(ui.btLooted, res.loot > 0 ? `+🪙 ${fmt(res.loot)}` : "");
         ui.btLooted.classList.toggle("hidden", res.loot <= 0);
 
-        ui.btStars.innerHTML = [0, 1, 2].map((i) => `<span class="${i < res.stars ? "is-on" : ""}">★</span>`).join("");
-        ui.btPct.textContent = `${res.destruction} %`;
+        if (B.hudStars !== res.stars) {
+            B.hudStars = res.stars;
+            ui.btStars.innerHTML = [0, 1, 2].map((i) => `<span class="${i < res.stars ? "is-on" : ""}">★</span>`).join("");
+        }
+        setText(ui.btPct, `${res.destruction} %`);
 
         if (B.kind === "live" && B.phase === "scout") {
-            ui.btTimerLabel.textContent = "Repérage";
-            ui.btTimer.textContent = fmtClock((data.expiresAt - V.serverNow()) / 1000);
+            setText(ui.btTimerLabel, "Repérage");
+            setText(ui.btTimer, fmtClock((data.expiresAt - V.serverNow()) / 1000));
         } else {
-            ui.btTimerLabel.textContent = B.phase === "done" || B.phase === "ending" ? "Terminé" : "Combat";
-            ui.btTimer.textContent = fmtClock((battle.maxTicks - battle.tick) / 10);
+            setText(ui.btTimerLabel, B.phase === "done" || B.phase === "ending" ? "Terminé" : "Combat");
+            setText(ui.btTimer, fmtClock((battle.maxTicks - battle.tick) / 10));
         }
     }
 

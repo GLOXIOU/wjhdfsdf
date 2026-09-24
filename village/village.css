@@ -429,6 +429,7 @@ a {
     bottom: calc(var(--v-safe-bottom) + 14px);
     display: flex;
     align-items: flex-end;
+    justify-content: center;
     gap: 0.65rem;
     pointer-events: none;
     z-index: 20;
@@ -450,11 +451,6 @@ a {
 
 .v-bottom .v-btn-army.is-training small::after {
     content: " ⏱";
-}
-
-.v-spacer {
-    flex: 1;
-    pointer-events: none !important;
 }
 
 .v-count {

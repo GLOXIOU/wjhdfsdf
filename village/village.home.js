@@ -214,23 +214,31 @@
     let animatedBubbles = false;
     let drawnItems = [];
 
+    /** Liste triee (profondeur) : recalculee seulement quand le village ou le fantome change, pas a chaque image. */
+    let sorted = [];
+    let sortedKey = "";
+    let sortedData = null;
+
     function drawList() {
-        const items = [];
-        for (const b of S.data.buildings) {
-            if (S.mode === "move" && S.ghost?.buildingId === b.id) continue;
-            items.push({
-                b, type: b.type, x: b.x, y: b.y, w: b.w, h: b.h, level: b.level,
-                constructing: b.level === 0,
-                selected: b.id === S.selectedId
-            });
+        const g = S.ghost;
+        const key = `${S.mode}|${g ? `${g.buildingId}|${g.type}|${g.x}|${g.y}` : ""}`;
+        if (sortedData !== S.data || sortedKey !== key) {
+            sortedData = S.data;
+            sortedKey = key;
+            const items = [];
+            for (const b of S.data.buildings) {
+                if (S.mode === "move" && g?.buildingId === b.id) continue;
+                items.push({ b, type: b.type, x: b.x, y: b.y, w: b.w, h: b.h, level: b.level, constructing: b.level === 0 });
+            }
+            if (g) {
+                const source = g.buildingId ? S.byId.get(g.buildingId) : null;
+                items.push({ b: source, ghost: true, type: g.type, x: g.x, y: g.y, w: g.w, h: g.h, level: source ? source.level : 1 });
+            }
+            view.linkWalls(items);
+            sorted = view.isoSort(items);
         }
-        if (S.ghost) {
-            const g = S.ghost;
-            const source = g.buildingId ? S.byId.get(g.buildingId) : null;
-            items.push({ b: source, ghost: true, type: g.type, x: g.x, y: g.y, w: g.w, h: g.h, level: source ? source.level : 1 });
-        }
-        view.linkWalls(items);
-        return view.isoSort(items);
+        for (const it of sorted) it.selected = !it.ghost && it.b?.id === S.selectedId;
+        return sorted;
     }
 
     function rangeColor(targets) {
@@ -385,7 +393,7 @@
         }
 
         drawnItems = drawList();
-        for (const it of drawnItems) view.drawBuilding(it, { badges: true });
+        for (const it of drawnItems) view.drawBuilding(it, { badges: true, sprites: true });
         drawCampTroops(drawnItems);
 
         hitBubbles = [];

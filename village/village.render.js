@@ -33,7 +33,8 @@
     const { TILE_W, TILE_H, MIN_ZOOM, MAX_ZOOM, TAP_SLOP, REDUCED_MOTION, EMOJI_FONT, UI_FONT } = cfg;
 
     const canvas = ui.canvas;
-    const ctx = canvas.getContext("2d");
+    /** Contexte de dessin courant (redirige un instant vers une petite toile pour les images de batiments). */
+    let ctx = canvas.getContext("2d");
     const sea = ui.sea;
     const sctx = sea.getContext("2d", { alpha: false });
     const cam = { x: 0, y: 0, zoom: 1 };
@@ -188,12 +189,31 @@
        PRIMITIVES (sprites emoji mis en cache : indispensable pour la fluidite)
        ====================================================================== */
 
-    const spriteCache = new Map();
+    /*
+     * Dessiner un emoji en texte est tres lent sur iPad : chacun est dessine
+     * une fois dans une petite toile, puis recopie. Tailles par paliers (4 par
+     * octave) et mise a l'echelle au dessin : un zoom ne fabrique que quelques
+     * sprites. Les plus anciens sont oublies un par un, jamais tous d'un coup
+     * (ce qui provoquait des saccades en zoomant).
+     */
+    const sprites = new Map(); // emoji -> Map(taille, negative si miroir -> toile)
+    const spriteOrder = [];
+    const SPRITE_MAX = 400;
 
-    function emojiSprite(emoji, size, flip) {
-        const dev = Math.max(8, Math.round((size * dpr) / 4) * 4);
-        const key = `${emoji}|${dev}|${flip ? 1 : 0}`;
-        let sprite = spriteCache.get(key);
+    function spriteSize(px) {
+        const want = Math.max(8, px);
+        const step = Math.max(4, 2 ** Math.floor(Math.log2(want)) / 4);
+        return Math.ceil(want / step) * step;
+    }
+
+    function emojiSprite(emoji, dev, flip) {
+        let bySize = sprites.get(emoji);
+        if (!bySize) {
+            bySize = new Map();
+            sprites.set(emoji, bySize);
+        }
+        const key = flip ? -dev : dev;
+        let sprite = bySize.get(key);
         if (!sprite) {
             sprite = document.createElement("canvas");
             const pad = Math.ceil(dev * 0.28);
@@ -207,25 +227,32 @@
                 g.scale(-1, 1);
             }
             g.fillText(emoji, sprite.width / 2, sprite.height / 2 + dev * 0.06);
-            if (spriteCache.size > 600) spriteCache.clear();
-            spriteCache.set(key, sprite);
+            bySize.set(key, sprite);
+            spriteOrder.push(bySize, key);
+            if (spriteOrder.length > SPRITE_MAX * 2) spriteOrder.shift().delete(spriteOrder.shift());
         }
         return sprite;
     }
 
     function drawEmoji(emoji, cx, cy, size, alpha = 1, flip = false) {
-        const sprite = emojiSprite(emoji, size, flip);
-        const w = sprite.width / dpr;
+        const want = size * dpr;
+        const dev = spriteSize(want);
+        const sprite = emojiSprite(emoji, dev, flip);
+        const w = (sprite.width / dpr) * (want / dev);
         if (alpha !== 1) ctx.globalAlpha = alpha;
         ctx.drawImage(sprite, cx - w / 2, cy - w / 2, w, w);
         if (alpha !== 1) ctx.globalAlpha = 1;
     }
 
+    function tracePoly(g, points) {
+        g.beginPath();
+        g.moveTo(points[0].x, points[0].y);
+        for (let i = 1; i < points.length; i++) g.lineTo(points[i].x, points[i].y);
+        g.closePath();
+    }
+
     function poly(points) {
-        ctx.beginPath();
-        ctx.moveTo(points[0].x, points[0].y);
-        for (let i = 1; i < points.length; i++) ctx.lineTo(points[i].x, points[i].y);
-        ctx.closePath();
+        tracePoly(ctx, points);
     }
 
     function roundRect(x, y, w, h, r) {
@@ -372,23 +399,15 @@
         }
         g.setTransform(seaRes, 0, 0, seaRes, 0, 0);
 
-        // Deux vagues qui arrivent vers le rivage...
-        g.lineWidth = Math.max(1.5, 3 * z);
-        for (let k = 0; k < 2; k++) {
-            const phase = (t / 3.4 + k / 2) % 1;
-            offsetPath(g, outline, (96 - 78 * phase) * z);
-            g.strokeStyle = `rgba(255,255,255,${(0.3 * Math.sin(Math.PI * phase)).toFixed(3)})`;
-            g.stroke();
-        }
-        // ...et l'ecume qui respire au pied des falaises.
-        offsetPath(g, outline, (10 + 3.5 * Math.sin(t * 1.9)) * z);
+        // Ecume au pied des falaises.
+        offsetPath(g, outline, 10 * z);
         g.fillStyle = "rgba(255,255,255,0.72)";
         g.fill();
     }
 
     /* --- Ile --------------------------------------------------------------- */
 
-    function drawIsland() {
+    function drawIsland(g) {
         const n = mapSize();
         const m = margin();
         const z = cam.zoom;
@@ -400,42 +419,45 @@
         const down = (p) => ({ x: p.x, y: p.y + depth });
 
         // Falaises de roche sableuse
-        ctx.fillStyle = "#b8793c";
-        poly([sL, sB, down(sB), down(sL)]);
-        ctx.fill();
-        ctx.fillStyle = "#8f5626";
-        poly([sB, sR, down(sR), down(sB)]);
-        ctx.fill();
-        ctx.strokeStyle = "rgba(0,0,0,0.12)";
-        ctx.lineWidth = 1;
-        ctx.beginPath();
+        g.fillStyle = "#b8793c";
+        tracePoly(g, [sL, sB, down(sB), down(sL)]);
+        g.fill();
+        g.fillStyle = "#8f5626";
+        tracePoly(g, [sB, sR, down(sR), down(sB)]);
+        g.fill();
+        g.strokeStyle = "rgba(0,0,0,0.12)";
+        g.lineWidth = 1;
+        g.beginPath();
         for (let k = 1; k <= 2; k++) {
-            ctx.moveTo(sL.x, sL.y + depth * k / 3);
-            ctx.lineTo(sB.x, sB.y + depth * k / 3);
-            ctx.lineTo(sR.x, sR.y + depth * k / 3);
+            g.moveTo(sL.x, sL.y + depth * k / 3);
+            g.lineTo(sB.x, sB.y + depth * k / 3);
+            g.lineTo(sR.x, sR.y + depth * k / 3);
         }
-        ctx.stroke();
+        g.stroke();
 
         // Plage
-        ctx.fillStyle = "#f6d9a0";
-        poly([sT, sR, sB, sL]);
-        ctx.fill();
-        ctx.strokeStyle = "rgba(255,255,255,0.55)";
-        ctx.lineWidth = Math.max(1.5, 3 * z);
-        ctx.stroke();
+        g.fillStyle = "#f6d9a0";
+        tracePoly(g, [sT, sR, sB, sL]);
+        g.fill();
+        g.strokeStyle = "rgba(255,255,255,0.55)";
+        g.lineWidth = Math.max(1.5, 3 * z);
+        g.stroke();
 
+        // Petits cailloux et touffes : un seul trace par couleur, pas un par point.
         if (z > 0.5) {
-            ctx.fillStyle = "rgba(160,110,50,0.22)";
             const span = n + 2 * m;
+            g.beginPath();
             for (const p of pebbles) {
                 const gx = -m + p.x * span;
                 const gy = -m + p.y * span;
                 if (gx > 0.2 && gy > 0.2 && gx < n - 0.2 && gy < n - 0.2) continue;
                 const q = iso(gx, gy);
-                ctx.beginPath();
-                ctx.ellipse(q.x, q.y, 2.2 * z * p.s, 1.1 * z * p.s, 0, 0, Math.PI * 2);
-                ctx.fill();
+                const rx = 2.2 * z * p.s;
+                g.moveTo(q.x + rx, q.y);
+                g.ellipse(q.x, q.y, rx, 1.1 * z * p.s, 0, 0, Math.PI * 2);
             }
+            g.fillStyle = "rgba(160,110,50,0.22)";
+            g.fill();
         }
 
         // Herbe
@@ -443,43 +465,83 @@
         const gR = iso(n, 0);
         const gB = iso(n, n);
         const gL = iso(0, n);
-        ctx.fillStyle = "#57a847";
-        poly([gT, gR, gB, gL]);
-        ctx.fill();
+        g.fillStyle = "#57a847";
+        tracePoly(g, [gT, gR, gB, gL]);
+        g.fill();
 
         // Damier discret
         const ex = { x: (TILE_W / 2) * z, y: (TILE_H / 2) * z };
         const ey = { x: -(TILE_W / 2) * z, y: (TILE_H / 2) * z };
-        ctx.fillStyle = "rgba(255,255,255,0.05)";
-        ctx.beginPath();
+        g.fillStyle = "rgba(255,255,255,0.05)";
+        g.beginPath();
         for (let gx = 0; gx < n; gx++) {
             for (let gy = gx % 2; gy < n; gy += 2) {
                 const x = gT.x + gx * ex.x + gy * ey.x;
                 const y = gT.y + gx * ex.y + gy * ey.y;
-                ctx.moveTo(x, y);
-                ctx.lineTo(x + ex.x, y + ex.y);
-                ctx.lineTo(x + ex.x + ey.x, y + ex.y + ey.y);
-                ctx.lineTo(x + ey.x, y + ey.y);
-                ctx.closePath();
+                g.moveTo(x, y);
+                g.lineTo(x + ex.x, y + ex.y);
+                g.lineTo(x + ex.x + ey.x, y + ex.y + ey.y);
+                g.lineTo(x + ey.x, y + ey.y);
+                g.closePath();
             }
         }
-        ctx.fill();
+        g.fill();
 
         // Lisiere herbe / sable
-        ctx.strokeStyle = "#3f8a37";
-        ctx.lineWidth = Math.max(2, 4 * z);
-        poly([gT, gR, gB, gL]);
-        ctx.stroke();
+        g.strokeStyle = "#3f8a37";
+        g.lineWidth = Math.max(2, 4 * z);
+        tracePoly(g, [gT, gR, gB, gL]);
+        g.stroke();
 
         if (z > 0.55) {
-            ctx.fillStyle = "rgba(22,90,40,0.5)";
+            g.beginPath();
             for (const t of tufts) {
                 const p = iso(t.x * n, t.y * n);
-                ctx.beginPath();
-                ctx.ellipse(p.x, p.y, 3.2 * z * t.s, 1.6 * z * t.s, 0, 0, Math.PI * 2);
-                ctx.fill();
+                const rx = 3.2 * z * t.s;
+                g.moveTo(p.x + rx, p.y);
+                g.ellipse(p.x, p.y, rx, 1.6 * z * t.s, 0, 0, Math.PI * 2);
             }
+            g.fillStyle = "rgba(22,90,40,0.5)";
+            g.fill();
         }
+    }
+
+    /*
+     * Le terrain ne change qu'avec la camera. Des qu'elle est immobile (le cas
+     * normal pendant une bataille), il est fige dans une toile a part et
+     * recopie d'un bloc a chaque image au lieu d'etre retrace.
+     */
+    const terrain = document.createElement("canvas");
+    const tctx = terrain.getContext("2d");
+    const terrainCam = [];
+    let terrainReady = false;
+    let terrainStill = 0;
+
+    function drawTerrain() {
+        const same = terrainCam[0] === cam.x && terrainCam[1] === cam.y && terrainCam[2] === cam.zoom &&
+            terrainCam[3] === vw && terrainCam[4] === vh && terrainCam[5] === dpr &&
+            terrainCam[6] === mapSize() && terrainCam[7] === margin();
+        if (!same) {
+            terrainCam.splice(0, 8, cam.x, cam.y, cam.zoom, vw, vh, dpr, mapSize(), margin());
+            terrainReady = false;
+            terrainStill = 0;
+        }
+        // Camera en mouvement : on trace directement, la mettre en cache ne servirait a rien.
+        if (!terrainReady && ++terrainStill < 2) {
+            drawIsland(ctx);
+            return;
+        }
+        if (!terrainReady) {
+            if (terrain.width !== canvas.width || terrain.height !== canvas.height) {
+                terrain.width = canvas.width;
+                terrain.height = canvas.height;
+            }
+            tctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+            tctx.clearRect(0, 0, vw, vh);
+            drawIsland(tctx);
+            terrainReady = true;
+        }
+        ctx.drawImage(terrain, 0, 0, vw, vh);
     }
 
     function drawGrid() {
@@ -750,7 +812,8 @@
 
     /**
      * Dessine un batiment. `opts.hideTraps` cache les pieges non declenches
-     * (vue de l'attaquant), `opts.badges` affiche la pastille de niveau.
+     * (vue de l'attaquant), `opts.badges` affiche la pastille de niveau,
+     * `opts.sprites` passe par les images en cache (bataille).
      */
     function drawBuilding(it, opts = {}) {
         const def = V.cat(it.type);
@@ -761,9 +824,15 @@
             return;
         }
         if (def.category === "decoration") return drawDecoration(it, def);
-        if (def.category === "wall") return drawWall(it, def);
         if (def.category === "trap") return drawTrap(it, def, opts.hideTraps);
+        if (opts.sprites && spritesOk && !it.ghost && !it.selected && !it.constructing && (it.alpha ?? 1) === 1) {
+            return drawFromSprite(it, def, opts);
+        }
+        if (def.category === "wall") return drawWall(it, def);
+        drawBody(it, def, opts);
+    }
 
+    function drawBody(it, def, opts) {
         const z = cam.zoom;
         const constructing = Boolean(it.constructing);
         const alpha = it.alpha ?? (it.ghost ? 0.82 : 1);
@@ -842,13 +911,109 @@
         }
 
         // Barre de vie (bataille)
-        if (it.maxHp > 0 && it.hp < it.maxHp) drawHpBar(cx, ey - size * 0.75, it.hp / it.maxHp, clamp(30 * it.w * z, 30, 70));
+        it.hpAt = { x: cx, y: ey - size * 0.75, w: clamp(30 * it.w * z, 30, 70) };
+        if (it.maxHp > 0 && it.hp < it.maxHp) drawHpBar(it.hpAt.x, it.hpAt.y, it.hp / it.maxHp, it.hpAt.w);
 
         it.hitPoly = [
             { x: cx, y: ey - size * 0.55 }, { x: right.x, y: up(right).y - size * 0.2 }, right, bottom, left,
             { x: left.x, y: up(left).y - size * 0.2 }
         ];
         it.anchor = { x: cx, y: ey - size * 0.62 };
+    }
+
+    /*
+     * Batiments en images (bataille). Chaque type de batiment (et chaque forme
+     * de mur) est dessine une seule fois dans une petite toile, puis recopie :
+     * une copie d'image au lieu d'une dizaine de polygones par batiment, ce que
+     * l'iPad dessine bien plus vite. L'ordre de dessin (troupes derriere ou
+     * devant) ne change pas. Ces toiles ne dependent que du zoom : deplacer la
+     * camera les garde valables ; pendant un pincement, on dessine directement.
+     */
+    const SPRITE_ZOOM_MAX = 1.35;
+    const buildingSprites = new Map();
+    let spritesZoom = 0;
+    let spritesDpr = 0;
+    let lastDrawZoom = 0;
+    let spritesOk = false;
+
+    /** Appele avant chaque image : les toiles ne servent que si le zoom n'a pas bouge. */
+    function prepareSprites() {
+        spritesOk = cam.zoom === lastDrawZoom && cam.zoom <= SPRITE_ZOOM_MAX;
+        lastDrawZoom = cam.zoom;
+        if (spritesOk && (cam.zoom !== spritesZoom || dpr !== spritesDpr)) {
+            buildingSprites.clear();
+            spritesZoom = cam.zoom;
+            spritesDpr = dpr;
+        }
+    }
+
+    function buildingSprite(it, def, at, opts) {
+        const z = cam.zoom;
+        let x0;
+        let x1;
+        let y0;
+        let y1;
+        if (def.category === "wall") {
+            const h = (11 + Math.max(1, it.level) * 1.5) * z;
+            x0 = iso(it.x, it.y + 1.25).x;
+            x1 = iso(it.x + 1.25, it.y).x;
+            y0 = at.y - h - 6 * z;
+            y1 = iso(it.x + 1.25, it.y + 1.25).y;
+        } else {
+            const height = (def.height + (Math.max(1, it.level) - 1) * 3) * z;
+            const size = Math.max(14, Math.min(it.w, it.h) * TILE_W * 0.56 * z);
+            const [top, right, bottom, left] = footprint(it.x, it.y, it.w, it.h, 0.1);
+            const cx = (left.x + right.x) / 2;
+            const ey = (top.y + bottom.y) / 2 - height - size * 0.3;
+            x0 = Math.min(left.x, cx - 0.8 * size);
+            x1 = Math.max(right.x + 6 * z, cx + 0.8 * size);
+            y0 = Math.min(top.y - height, ey - 0.8 * size);
+            y1 = bottom.y + 4 * z;
+        }
+        const ox = Math.floor((x0 - 3) * dpr) / dpr;
+        const oy = Math.floor((y0 - 3) * dpr) / dpr;
+        const el = document.createElement("canvas");
+        el.width = Math.ceil((x1 + 3 - ox) * dpr);
+        el.height = Math.ceil((y1 + 3 - oy) * dpr);
+        const g = el.getContext("2d");
+        g.setTransform(dpr, 0, 0, dpr, -ox * dpr, -oy * dpr);
+        // Meme code de dessin, simplement redirige vers la petite toile (sans barre de vie).
+        const copy = { ...it, maxHp: 0, hitPoly: null, anchor: null, hpAt: null };
+        const main = ctx;
+        ctx = g;
+        try {
+            if (def.category === "wall") drawWall(copy, def);
+            else drawBody(copy, def, { badges: opts.badges });
+        } finally {
+            ctx = main;
+        }
+        const rel = (p) => ({ x: p.x - at.x, y: p.y - at.y });
+        return {
+            canvas: el,
+            w: el.width / dpr,
+            h: el.height / dpr,
+            ax: at.x - ox,
+            ay: at.y - oy,
+            hit: (copy.hitPoly || []).map(rel),
+            anchor: rel(copy.anchor || at),
+            hp: copy.hpAt ? { ...rel(copy.hpAt), w: copy.hpAt.w } : null
+        };
+    }
+
+    function drawFromSprite(it, def, opts) {
+        const key = def.category === "wall"
+            ? `mura${it.level}${it.right ? "r" : ""}${it.down ? "d" : ""}`
+            : `${it.type}${it.level}${it.inactive ? "i" : ""}${opts.badges ? "b" : ""}`;
+        const at = iso(it.x, it.y);
+        let s = buildingSprites.get(key);
+        if (!s) {
+            s = buildingSprite(it, def, at, opts);
+            buildingSprites.set(key, s);
+        }
+        ctx.drawImage(s.canvas, Math.round((at.x - s.ax) * dpr) / dpr, Math.round((at.y - s.ay) * dpr) / dpr, s.w, s.h);
+        it.hitPoly = s.hit.map((p) => ({ x: at.x + p.x, y: at.y + p.y }));
+        it.anchor = { x: at.x + s.anchor.x, y: at.y + s.anchor.y };
+        if (s.hp && it.maxHp > 0 && it.hp < it.maxHp) drawHpBar(at.x + s.hp.x, at.y + s.hp.y, it.hp / it.maxHp, s.hp.w);
     }
 
     Object.assign(view, { isoSort, linkWalls, drawBuilding, drawHpBar });
@@ -1089,9 +1254,15 @@
      * deux images.
      */
     const AMBIENT_MS = 1000 / 12;
+    /**
+     * Bataille et effets : 30 i/s suffisent (les troupes avancent a 10 ticks/s
+     * et sont interpolees). Le doigt qui deplace la camera garde 60 i/s.
+     */
+    const FAST_MS = 1000 / 30;
 
     let rafId = 0;
     let dirty = false;
+    let lastDraw = -Infinity;
     let inertia = null;
     let ambientTimer = 0;
     let lastSea = -Infinity;
@@ -1145,8 +1316,9 @@
 
         // Les animations lentes (bulles qui flottent) passent par l'horloge lente.
         const fast = effects.length > 0 || camTween || inertia || scene.animating() === "fast";
-        if (dirty || fast) {
+        if (dirty || (fast && ts - lastDraw >= FAST_MS - 2)) {
             draw(ts);
+            lastDraw = ts;
             dirty = false;
         }
         seaTick(ts);
@@ -1156,7 +1328,8 @@
     function draw(ts) {
         ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
         ctx.clearRect(0, 0, vw, vh);
-        drawIsland();
+        prepareSprites();
+        drawTerrain();
         if (scene.showGrid?.()) drawGrid();
         scene.draw(ts);
         drawEffects();
@@ -1164,6 +1337,7 @@
 
     function setScene(next) {
         scene = next;
+        buildingSprites.clear();
         inertia = null;
         camTween = null;
         requestDraw();
