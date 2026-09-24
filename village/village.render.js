@@ -6,10 +6,15 @@
    rendu (a la demande, pour menager la batterie de l'iPad), le decor et les
    primitives de dessin communes.
 
+   Deux toiles superposees : la mer (#v-sea, basse resolution, animee a
+   ~12 i/s) et le village (#v-canvas, transparent, redessine uniquement
+   quand quelque chose change).
+
    Interface d'une scene :
      mapSize(), margin()            taille du terrain et de la plage (cases)
      draw(ts)                       dessine tout ce qui est au-dessus du terrain
-     animating()                    vrai tant qu'il faut redessiner en continu
+     animating()                    "fast" : 60 i/s (bataille) ; true : animation
+                                    lente, au rythme de la mer ; false : rien
      update?(ts)                    avance la simulation avant le dessin
      showGrid?()                    quadrillage visible (placement)
      tap(x, y)                      toucher bref
@@ -28,13 +33,18 @@
     const { TILE_W, TILE_H, MIN_ZOOM, MAX_ZOOM, TAP_SLOP, REDUCED_MOTION, EMOJI_FONT, UI_FONT } = cfg;
 
     const canvas = ui.canvas;
-    const ctx = canvas.getContext("2d", { alpha: false });
+    const ctx = canvas.getContext("2d");
+    const sea = ui.sea;
+    const sctx = sea.getContext("2d", { alpha: false });
     const cam = { x: 0, y: 0, zoom: 1 };
     let vw = 0;
     let vh = 0;
     let dpr = 1;
+    /** Resolution de la mer : jamais plus d'un pixel par point CSS (4x moins de pixels sur iPad). */
+    let seaRes = 1;
     let scene = null;
     let camTween = null;
+    let navBottom = -1;
 
     const view = (V.view = { ctx, cam, get vw() { return vw; }, get vh() { return vh; } });
 
@@ -47,12 +57,50 @@
 
     function resize() {
         dpr = Math.min(window.devicePixelRatio || 1, 2);
+        seaRes = Math.min(dpr, 1);
         vw = ui.app.clientWidth || window.innerWidth;
         vh = ui.app.clientHeight || window.innerHeight;
         canvas.width = Math.round(vw * dpr);
         canvas.height = Math.round(vh * dpr);
+        sea.width = Math.round(vw * seaRes);
+        sea.height = Math.round(vh * seaRes);
+        seaCam.length = 0;
+        syncNav();
         clampCamera();
         requestDraw();
+    }
+
+    /** Bas de la barre de navigation : le HUD et les panneaux se calent dessous (CSS --v-nav-bottom). */
+    function syncNav() {
+        if (!ui.nav) return;
+        const bottom = Math.round(ui.nav.getBoundingClientRect().bottom - ui.app.getBoundingClientRect().top);
+        if (bottom === navBottom) return;
+        navBottom = bottom;
+        ui.app.style.setProperty("--v-nav-bottom", `${bottom}px`);
+    }
+    // La nav change de hauteur quand shared-nav.js la remplit, ou en passant sous 900 px de large.
+    if (ui.nav && window.ResizeObserver) new ResizeObserver(syncNav).observe(ui.nav);
+
+    const isShown = (el) => Boolean(el) && el.getClientRects().length > 0;
+
+    /** Place prise par les barres fixes (nav + HUD en haut, boutons en bas) sur la scene actuelle. */
+    function hudInsets() {
+        const box = ui.app.getBoundingClientRect();
+        let top = 0;
+        let bottom = 0;
+        for (const el of [ui.nav, ui.top, ui.btTop]) {
+            if (isShown(el)) top = Math.max(top, el.getBoundingClientRect().bottom - box.top);
+        }
+        for (const el of [ui.bottom, ui.btBottom]) {
+            if (isShown(el)) bottom = Math.max(bottom, box.bottom - el.getBoundingClientRect().top);
+        }
+        return { top, bottom };
+    }
+
+    /** Hauteur (ecran) du milieu de la zone de carte laissee libre par les barres. */
+    function freeCenterY() {
+        const { top, bottom } = hudInsets();
+        return (top + vh - bottom) / 2;
     }
 
     function isoWorld(gx, gy) {
@@ -87,22 +135,25 @@
         cam.y = clamp(cam.y, -margin() * TILE_H, n * TILE_H);
     }
 
-    /** Cadre toute l'ile (plage comprise) en laissant la place aux barres du haut et du bas. */
-    function centerCamera(reserveBottom = 190) {
+    /** Cadre toute l'ile (plage comprise) dans l'espace laisse libre entre les barres du haut et du bas. */
+    function centerCamera() {
         const n = mapSize();
         const m = margin();
         const span = n + 2 * m;
         const mapW = span * TILE_W;
         const mapH = span * TILE_H + 40;
+        const { top, bottom } = hudInsets();
+        const freeH = Math.max(160, vh - top - bottom - 16);
         const fitWidth = (vw - 24) / mapW;
-        const fitHeight = (vh - reserveBottom) / mapH;
+        const fitHeight = freeH / mapH;
         // En portrait, l'ile entiere en largeur laisserait la moitie de l'ecran
         // vide : on zoome un peu plus, les bords restent accessibles.
         const fit = Math.min(fitHeight, fitWidth * (vh > vw ? 1.35 : 1));
         cam.zoom = clamp(fit, MIN_ZOOM, 1.3);
         const center = isoWorld(n / 2, n / 2);
         cam.x = center.x;
-        cam.y = center.y + 12;
+        // +12 : les falaises descendent sous le terrain, le centre visuel est un peu plus bas.
+        cam.y = center.y + 12 - ((top + vh - bottom) / 2 - vh / 2) / cam.zoom;
         camTween = null;
         clampCamera();
         requestDraw();
@@ -122,7 +173,7 @@
     function ensureVisible(gx, gy, dockHeight = 220) {
         const center = iso(gx, gy);
         const dockTop = vh - dockHeight - 40;
-        const topLimit = 110;
+        const topLimit = hudInsets().top + 10;
         let dy = 0;
         if (center.y > dockTop) dy = center.y - dockTop;
         else if (center.y - 80 < topLimit) dy = center.y - 80 - topLimit;
@@ -131,7 +182,7 @@
         requestDraw();
     }
 
-    Object.assign(view, { resize, isoWorld, toScreen, iso, screenToWorld, gridAt, clampCamera, centerCamera, zoomAt, ensureVisible });
+    Object.assign(view, { resize, isoWorld, toScreen, iso, screenToWorld, gridAt, clampCamera, centerCamera, zoomAt, ensureVisible, freeCenterY });
 
     /* ======================================================================
        PRIMITIVES (sprites emoji mis en cache : indispensable pour la fluidite)
@@ -222,27 +273,120 @@
     const tufts = seeded(130, 1337, 1);
     const pebbles = seeded(120, 4242, 1);
 
-    function drawBackground() {
-        // Degrade orange -> rouge, comme les accents du reste du jeu.
-        const g = ctx.createLinearGradient(0, 0, vw * 0.25, vh);
-        g.addColorStop(0, "#fb923c");
-        g.addColorStop(0.5, "#ea580c");
-        g.addColorStop(1, "#9f1239");
-        ctx.fillStyle = g;
-        ctx.fillRect(0, 0, vw, vh);
+    /* --- Mer --------------------------------------------------------------- */
 
-        const glow = ctx.createRadialGradient(vw * 0.5, vh * 0.42, 20, vw * 0.5, vh * 0.45, Math.max(vw, vh) * 0.7);
-        glow.addColorStop(0, "rgba(255,237,213,0.28)");
-        glow.addColorStop(1, "rgba(255,237,213,0)");
-        ctx.fillStyle = glow;
-        ctx.fillRect(0, 0, vw, vh);
+    const SEA_COLOR = "#0c4a6e";
+    /** Bandes d'eau de plus en plus claires vers le rivage : [distance a l'ile, couleur]. */
+    const SEA_RINGS = [[120, "#0d5779"], [74, "#0f6a8c"], [40, "#138aa6"], [18, "#27b3c6"]];
 
-        const vignette = ctx.createRadialGradient(vw * 0.5, vh * 0.5, Math.min(vw, vh) * 0.35, vw * 0.5, vh * 0.5, Math.max(vw, vh) * 0.85);
-        vignette.addColorStop(0, "rgba(40,0,0,0)");
-        vignette.addColorStop(1, "rgba(40,0,0,0.38)");
-        ctx.fillStyle = vignette;
-        ctx.fillRect(0, 0, vw, vh);
+    /** Motif de vaguelettes (tuile qui se repete sans raccord visible). */
+    function waveTile(seed, count, color, width) {
+        const W = 256;
+        const H = 128;
+        const tile = document.createElement("canvas");
+        tile.width = W;
+        tile.height = H;
+        const g = tile.getContext("2d");
+        g.strokeStyle = color;
+        g.lineWidth = width;
+        g.lineCap = "round";
+        g.beginPath();
+        for (const p of seeded(count, seed, 1)) {
+            const w = 7 + p.s * 9;
+            const h = w * 0.34;
+            // Chaque vaguelette est aussi dessinee de l'autre cote des bords : la tuile se raccorde.
+            for (const dx of [-W, 0, W]) {
+                for (const dy of [-H, 0, H]) {
+                    const x = p.x * W + dx;
+                    const y = p.y * H + dy;
+                    g.moveTo(x - w, y);
+                    g.quadraticCurveTo(x - w / 2, y - h, x, y);
+                    g.quadraticCurveTo(x + w / 2, y + h, x + w, y);
+                }
+            }
+        }
+        g.stroke();
+        return { pattern: sctx.createPattern(tile, "repeat"), w: W, h: H };
     }
+
+    // Deux trains de vagues qui derivent l'un contre l'autre : l'eau "vit" sans rien de couteux.
+    const waveLayers = [
+        { ...waveTile(90210, 9, "rgba(255,255,255,0.13)", 2.2), scale: 1, vx: 9, vy: 4.5 },
+        { ...waveTile(31337, 5, "rgba(125,211,252,0.12)", 2.6), scale: 1.7, vx: -5, vy: 2.5 }
+    ];
+
+    /** Contour de l'ile vue de dessus : plage + falaises (hexagone convexe, sens horaire). */
+    function islandOutline() {
+        const n = mapSize();
+        const m = margin();
+        const depth = 34 * cam.zoom;
+        const sT = iso(-m, -m);
+        const sR = iso(n + m, -m);
+        const sB = iso(n + m, n + m);
+        const sL = iso(-m, n + m);
+        return [sT, sR, { x: sR.x, y: sR.y + depth }, { x: sB.x, y: sB.y + depth }, { x: sL.x, y: sL.y + depth }, sL];
+    }
+
+    /** Trace le contour decale de r pixels vers l'exterieur, coins arrondis. */
+    function offsetPath(g, pts, r) {
+        const k = pts.length;
+        const normal = (a, b) => Math.atan2(-(b.x - a.x), b.y - a.y);
+        g.beginPath();
+        for (let i = 0; i < k; i++) {
+            const prev = pts[(i + k - 1) % k];
+            const p = pts[i];
+            const next = pts[(i + 1) % k];
+            g.arc(p.x, p.y, r, normal(prev, p), normal(p, next));
+        }
+        g.closePath();
+    }
+
+    function drawSea(now) {
+        lastSea = now;
+        const t = REDUCED_MOTION ? 0 : now / 1000;
+        const z = cam.zoom;
+        const g = sctx;
+        g.setTransform(seaRes, 0, 0, seaRes, 0, 0);
+        g.fillStyle = SEA_COLOR;
+        g.fillRect(0, 0, vw, vh);
+
+        // Hauts-fonds autour de l'ile (dessous, l'ile les recouvre).
+        const outline = islandOutline();
+        for (const [r, color] of SEA_RINGS) {
+            offsetPath(g, outline, r * z);
+            g.fillStyle = color;
+            g.fill();
+        }
+
+        // Vaguelettes accrochees au monde : elles suivent la camera.
+        const w0 = screenToWorld(0, 0);
+        const w1 = screenToWorld(vw, vh);
+        for (const layer of waveLayers) {
+            const ox = (t * layer.vx) % (layer.w * layer.scale);
+            const oy = (t * layer.vy) % (layer.h * layer.scale);
+            g.setTransform(seaRes * z, 0, 0, seaRes * z, seaRes * (vw / 2 - cam.x * z), seaRes * (vh / 2 - cam.y * z));
+            g.translate(ox, oy);
+            g.scale(layer.scale, layer.scale);
+            g.fillStyle = layer.pattern;
+            g.fillRect((w0.x - ox) / layer.scale, (w0.y - oy) / layer.scale, (w1.x - w0.x) / layer.scale, (w1.y - w0.y) / layer.scale);
+        }
+        g.setTransform(seaRes, 0, 0, seaRes, 0, 0);
+
+        // Deux vagues qui arrivent vers le rivage...
+        g.lineWidth = Math.max(1.5, 3 * z);
+        for (let k = 0; k < 2; k++) {
+            const phase = (t / 3.4 + k / 2) % 1;
+            offsetPath(g, outline, (96 - 78 * phase) * z);
+            g.strokeStyle = `rgba(255,255,255,${(0.3 * Math.sin(Math.PI * phase)).toFixed(3)})`;
+            g.stroke();
+        }
+        // ...et l'ecume qui respire au pied des falaises.
+        offsetPath(g, outline, (10 + 3.5 * Math.sin(t * 1.9)) * z);
+        g.fillStyle = "rgba(255,255,255,0.72)";
+        g.fill();
+    }
+
+    /* --- Ile --------------------------------------------------------------- */
 
     function drawIsland() {
         const n = mapSize();
@@ -253,12 +397,7 @@
         const sB = iso(n + m, n + m);
         const sL = iso(-m, n + m);
         const depth = 34 * z;
-        const down = (p, k = 1) => ({ x: p.x, y: p.y + depth * k });
-
-        // Ombre portee sous l'ile
-        ctx.fillStyle = "rgba(60,8,8,0.28)";
-        poly([down(sT, 1.4), { x: sR.x + 14 * z, y: sR.y + depth * 1.5 }, down(sB, 1.9), { x: sL.x - 14 * z, y: sL.y + depth * 1.5 }]);
-        ctx.fill();
+        const down = (p) => ({ x: p.x, y: p.y + depth });
 
         // Falaises de roche sableuse
         ctx.fillStyle = "#b8793c";
@@ -943,14 +1082,47 @@
        BOUCLE DE RENDU (a la demande)
        ====================================================================== */
 
+    /**
+     * Horloge lente (~12 i/s) pour tout ce qui bouge doucement : la mer, et
+     * les bulles qui flottent au-dessus du village. Un simple minuteur plutot
+     * qu'un requestAnimationFrame a 60-120 i/s : l'iPad reste au repos entre
+     * deux images.
+     */
+    const AMBIENT_MS = 1000 / 12;
+
     let rafId = 0;
     let dirty = false;
-    let lastDraw = 0;
     let inertia = null;
+    let ambientTimer = 0;
+    let lastSea = -Infinity;
+    /** Camera au dernier dessin de la mer : si elle a bouge, la mer suit dans la meme image. */
+    const seaCam = [];
 
     function requestDraw() {
         dirty = true;
         if (!rafId && !document.hidden) rafId = requestAnimationFrame(frame);
+        scheduleAmbient();
+    }
+
+    function seaTick(now) {
+        const moved = seaCam[0] !== cam.x || seaCam[1] !== cam.y || seaCam[2] !== cam.zoom || seaCam[3] !== mapSize() || seaCam[4] !== margin();
+        if (!moved && (REDUCED_MOTION || now - lastSea < AMBIENT_MS - 4)) return;
+        seaCam.splice(0, 5, cam.x, cam.y, cam.zoom, mapSize(), margin());
+        drawSea(now);
+    }
+
+    function scheduleAmbient() {
+        if (ambientTimer || REDUCED_MOTION || document.hidden || !scene) return;
+        ambientTimer = setTimeout(() => {
+            ambientTimer = 0;
+            if (document.hidden || !scene) return;
+            // Boucle rapide en cours (geste, bataille) : elle dessine deja tout, mer comprise.
+            if (!rafId) {
+                if (scene.animating()) requestDraw();
+                else seaTick(performance.now());
+            }
+            scheduleAmbient();
+        }, AMBIENT_MS);
     }
 
     function frame(ts) {
@@ -971,20 +1143,19 @@
             dirty = true;
         }
 
-        const live = scene.animating();
-        const fast = effects.length > 0 || camTween || inertia || live === "fast";
-        // Les animations lentes (bulles qui flottent) n'ont pas besoin de 60 i/s.
-        if (dirty || fast || (live && !REDUCED_MOTION && ts - lastDraw > 33)) {
+        // Les animations lentes (bulles qui flottent) passent par l'horloge lente.
+        const fast = effects.length > 0 || camTween || inertia || scene.animating() === "fast";
+        if (dirty || fast) {
             draw(ts);
-            lastDraw = ts;
             dirty = false;
         }
-        if (fast || (live && !REDUCED_MOTION)) rafId = requestAnimationFrame(frame);
+        seaTick(ts);
+        if (fast) rafId = requestAnimationFrame(frame);
     }
 
     function draw(ts) {
         ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-        drawBackground();
+        ctx.clearRect(0, 0, vw, vh);
         drawIsland();
         if (scene.showGrid?.()) drawGrid();
         scene.draw(ts);
@@ -1001,6 +1172,8 @@
     function stopLoop() {
         if (rafId) cancelAnimationFrame(rafId);
         rafId = 0;
+        clearTimeout(ambientTimer);
+        ambientTimer = 0;
     }
 
     Object.assign(view, { requestDraw, setScene, stopLoop, get scene() { return scene; } });

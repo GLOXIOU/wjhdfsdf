@@ -436,7 +436,7 @@
         if (!c) return;
         V.closeSheet();
         S.selectedId = null;
-        const at = spot || findFreeSpot(c.w, c.h, view.gridAt(view.vw / 2, view.vh / 2 - 40), c.category === "wall" || c.category === "trap");
+        const at = spot || findFreeSpot(c.w, c.h, view.gridAt(view.vw / 2, view.freeCenterY() - 40), c.category === "wall" || c.category === "trap");
         if (!at) {
             V.toast("Plus aucune place libre sur ton terrain !", "error");
             return;

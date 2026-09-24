@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>PlayWeb – Loader</title>
+<style>
+:root{--ink:#12161a;--blue:#154a8a;--orange:#d9531c;--dur:7s}
+*,*::before,*::after{box-sizing:border-box}
+html,body{height:100%;margin:0}
+body{background:var(--ink)} /* fond de la page d'exemple, à remplacer par le tien */
+
+/* ===== LOADER (plein écran) ===== */
+#loader{position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;background:transparent;overflow:hidden;transition:opacity .6s ease,visibility .6s}
+#loader.done{opacity:0;visibility:hidden}
+
+.logo{position:relative;width:min(38vmin,300px);height:auto;overflow:visible;filter:drop-shadow(0 20px 50px rgba(0,0,0,.35));
+  transform-origin:50% 50%;animation:life var(--dur) cubic-bezier(.5,0,.5,1) infinite}
+/* Entrée puis sortie de l'ensemble à chaque boucle */
+@keyframes life{
+  0%{opacity:1;transform:none}
+  69.4%{opacity:1;transform:none}
+  77.1%,100%{opacity:0;transform:scale(.65) rotate(10deg)}
+}
+
+.pad,.dpad,.dot,.tri{transform-box:fill-box;transform-origin:center}
+.outline{fill:none;stroke:#fff;stroke-width:2.5;stroke-linejoin:round;stroke-dasharray:1000;animation:draw var(--dur) linear infinite}
+.tri{fill:#fff;animation:tri var(--dur) linear infinite}
+.pad{animation:pad var(--dur) linear infinite}
+.dpad{animation:dpad var(--dur) linear infinite}
+.dot:nth-of-type(1){animation:dotA var(--dur) linear infinite}
+.dot:nth-of-type(2){animation:dotB var(--dur) linear infinite}
+.dot:nth-of-type(3){animation:dotC var(--dur) linear infinite}
+.dot:nth-of-type(4){animation:dotD var(--dur) linear infinite}
+
+@keyframes draw{0%{stroke-dashoffset:1000;opacity:1}13.9%{stroke-dashoffset:0;opacity:1}17%,100%{stroke-dashoffset:0;opacity:0}}
+@keyframes tri{0%,10%{opacity:0;transform:scale(.6) rotate(-8deg)}15.4%{opacity:1;transform:scale(1.05)}18.5%,100%{opacity:1;transform:none}}
+@keyframes pad{0%,17%{transform:scale(0)}21.6%{transform:scale(1.08)}23.9%,100%{transform:scale(1)}}
+@keyframes dpad{0%,20.8%{transform:scale(0)}24.7%{transform:scale(1.15)}26.2%,100%{transform:scale(1)}}
+@keyframes dotA{0%,21.6%{transform:scale(0)}25.5%{transform:scale(1.25)}27%,100%{transform:scale(1)}}
+@keyframes dotB{0%,23.1%{transform:scale(0)}26.2%{transform:scale(1.25)}28.5%,100%{transform:scale(1)}}
+@keyframes dotC{0%,24.7%{transform:scale(0)}27.8%{transform:scale(1.25)}29.3%,100%{transform:scale(1)}}
+@keyframes dotD{0%,26.2%{transform:scale(0)}29.3%{transform:scale(1.25)}30.9%,100%{transform:scale(1)}}
+
+/* Mouvement réduit : logo fixe, sans boucle */
+@media (prefers-reduced-motion:reduce){
+  .logo,.outline,.tri,.pad,.dpad,.dot{animation:none!important}
+  .outline{opacity:0}
+}
+
+/* ===== Contenu de la page (exemple) ===== */
+main{min-height:100%;display:grid;place-items:center;color:#fff;font:600 20px system-ui,sans-serif}
+</style>
+</head>
+<body>
+
+<div id="loader" role="status" aria-label="Chargement en cours">
+  <svg class="logo" viewBox="0 0 400 400" aria-hidden="true">
+    <defs>
+      <mask id="cut" maskUnits="userSpaceOnUse" x="0" y="0" width="400" height="400">
+        <rect width="400" height="400" fill="#fff"/>
+        <g transform="translate(92 148) scale(1.15)">
+          <path class="pad" fill="#000" d="M20 8Q30 0 45 4L48 6H72L75 4Q90 0 100 8Q108 30 116 58Q120 78 104 82Q92 84 80 70Q74 64 66 64H54Q46 64 40 70Q28 84 16 82Q0 78 4 58Q12 30 20 8Z"/>
+        </g>
+        <g transform="translate(92 148) scale(1.15)" fill="#fff">
+          <g class="dpad">
+            <rect x="26" y="26" width="10" height="28" rx="4"/>
+            <rect x="17" y="35" width="28" height="10" rx="4"/>
+          </g>
+          <circle class="dot" cx="86" cy="26" r="5.5"/>
+          <circle class="dot" cx="76" cy="36" r="5.5"/>
+          <circle class="dot" cx="96" cy="36" r="5.5"/>
+          <circle class="dot" cx="86" cy="46" r="5.5"/>
+        </g>
+      </mask>
+    </defs>
+    <polygon class="outline" points="60,32 60,368 356,200" pathLength="1000"/>
+    <g mask="url(#cut)">
+      <polygon class="tri" points="85,65 85,335 320,200" stroke="#fff" stroke-width="52" stroke-linejoin="round"/>
+    </g>
+  </svg>
+</div>
+
+<main>Ta page ici</main>
+
+<script>
+(function(){
+  var loader=document.getElementById('loader');
+  var DEMO=true;            // true = le loader tourne en boucle sans fin (aperçu). Passe à false en production.
+  var CYCLE=7000;           // durée d'une boucle (ms), doit correspondre à --dur
+  var start=Date.now();
+
+  function hide(){
+    // On attend la fin de la boucle en cours pour que la sortie soit propre
+    var wait=CYCLE-((Date.now()-start)%CYCLE);
+    setTimeout(function(){loader.classList.add('done')},wait);
+  }
+  if(!DEMO){
+    if(document.readyState==='complete')hide();
+    else addEventListener('load',hide);
+  }
+})();
+</script>
+</body>
+</html>

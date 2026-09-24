@@ -41,15 +41,14 @@
        ====================================================================== */
 
     function showError(message) {
-        ui.loading.classList.add("is-done");
+        V.loader.hide();
         ui.errorText.textContent = message;
         ui.error.classList.remove("hidden");
     }
 
     async function boot() {
         ui.error.classList.add("hidden");
-        ui.loading.classList.remove("is-done", "is-overlay");
-        ui.loadingText.textContent = "Chargement du Villaggio…";
+        V.loader.show("Chargement du Villaggio…");
         const token = await V.getToken();
         if (!token) {
             // auth-gate redirige vers PlayWeb.
@@ -63,8 +62,8 @@
         }
         view.setScene(V.home.scene);
         V.applyState(res.village);
-        ui.loading.classList.add("is-done");
         startTimers();
+        await V.loader.hide();
         // Au retour : d'abord le rapport des attaques subies, sinon l'accueil des nouveaux.
         if (!V.war.maybeShowDefenseReport()) V.home.maybeShowWelcome();
     }

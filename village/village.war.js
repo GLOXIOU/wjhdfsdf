@@ -586,7 +586,7 @@
         ui.btHint.classList.toggle("hidden", state.kind !== "live");
         view.fx.clear();
         view.setScene(battleScene);
-        view.centerCamera(170);
+        view.centerCamera();
         renderTroopBar();
         renderHud(true);
     }
@@ -739,13 +739,11 @@
     let launching = false;
 
     function showBusy(text) {
-        ui.loadingText.textContent = text;
-        ui.loading.classList.remove("is-done");
-        ui.loading.classList.add("is-overlay");
+        V.loader.show(text, true);
     }
 
     function hideBusy() {
-        ui.loading.classList.add("is-done");
+        V.loader.hide();
     }
 
     async function launch(path, body, text) {

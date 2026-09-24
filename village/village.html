@@ -6,21 +6,37 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="theme-color" content="#ea580c">
+    <meta name="theme-color" content="#0c4a6e">
     <meta name="format-detection" content="telephone=no">
     <title>BrainrotStars - Villaggio</title>
+    <script defer src="https://unpkg.com/lucide@latest"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <!-- Police du logo PlayWeb, reduite aux 7 lettres du mot et chargee sans bloquer l'affichage -->
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@700&amp;text=PlayWeb&amp;display=block" media="print" onload="this.media='all'">
+    <link rel="stylesheet" href="../index/style.css">
     <link rel="stylesheet" href="village.css">
     <link rel="icon" type="image/x-icon" href="https://raw.githubusercontent.com/schoolllex/images/refs/heads/main/BrainrotStar/favicon.ico">
 </head>
 <body>
     <div class="v-app" id="v-app">
+        <canvas id="v-sea" aria-hidden="true"></canvas>
         <canvas id="v-canvas" aria-label="Carte du Villaggio"></canvas>
 
+        <!-- ===== Navigation commune du jeu (remplie par shared-nav.js), toujours visible ===== -->
+        <div class="v-nav" id="v-nav">
+            <header class="navbar">
+                <div class="logo">
+                    <a href="../index/index.html" class="nav-link">
+                        <img src="https://raw.githubusercontent.com/schoolllex/images/refs/heads/main/BrainrotStar/BrainrotStar_logo_fc.png" alt="Brainrot Star" class="logo-image">
+                    </a>
+                </div>
+                <div class="nav-buttons"></div>
+            </header>
+        </div>
+
         <!-- ===== Ton village : barre du haut ===== -->
-        <header class="v-top" id="v-top">
-            <a class="v-btn v-btn-icon nav-link" href="../index/index.html" aria-label="Retour à l'accueil">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg>
-            </a>
+        <div class="v-top" id="v-top">
             <div class="v-title">
                 <strong id="v-title">Villaggio</strong>
                 <span id="v-subtitle">Palazzo niv. 1</span>
@@ -43,7 +59,7 @@
                 <strong id="v-gold">0</strong>
                 <small id="v-cps">+0/s</small>
             </div>
-        </header>
+        </div>
 
         <div class="v-toasts" id="v-toasts" aria-live="polite"></div>
 
@@ -103,7 +119,7 @@
 
         <!-- ===== Bataille (reperage, combat, replay) ===== -->
         <div class="v-battle hidden" id="v-battle">
-            <div class="v-bt-top">
+            <div class="v-bt-top" id="v-bt-top">
                 <div class="v-bt-panel v-bt-info">
                     <strong id="v-bt-name"></strong>
                     <span id="v-bt-sub"></span>
@@ -122,7 +138,7 @@
                 </div>
             </div>
             <p class="v-bt-hint" id="v-bt-hint">Choisis une troupe, puis touche la plage ou une zone libre pour la déployer. Garde le doigt appuyé pour en poser plusieurs.</p>
-            <div class="v-bt-bottom">
+            <div class="v-bt-bottom" id="v-bt-bottom">
                 <div class="v-bt-troops" id="v-bt-troops"></div>
                 <div class="v-bt-actions">
                     <button class="v-btn v-btn-speed hidden" id="v-bt-speed" type="button">⏩ x1</button>
@@ -143,15 +159,44 @@
             <div class="v-sheet-body" id="v-sheet-body"></div>
         </section>
 
-        <div class="v-loading" id="v-loading">
-            <div class="v-loading-glow" aria-hidden="true"></div>
-            <img class="v-loading-logo" src="../assets/BrainrotStar_logo_fc.png" alt="Brainrot Star">
+        <!-- Chargement : logo PlayWeb anime (repris de assets/playweb-logo-animation.html) -->
+        <div class="v-loading" id="v-loading" role="status">
+            <div class="v-loading-bg" aria-hidden="true"><i></i><i></i></div>
+            <div class="v-logo" aria-label="PlayWeb">
+                <div class="v-logo-float">
+                    <svg class="v-logo-mark" viewBox="0 0 400 400" aria-hidden="true">
+                        <defs>
+                            <mask id="v-logo-cut" maskUnits="userSpaceOnUse" x="0" y="0" width="400" height="400">
+                                <rect width="400" height="400" fill="#fff"/>
+                                <g transform="translate(92 148) scale(1.15)">
+                                    <path class="v-logo-pad" fill="#000" d="M20 8Q30 0 45 4L48 6H72L75 4Q90 0 100 8Q108 30 116 58Q120 78 104 82Q92 84 80 70Q74 64 66 64H54Q46 64 40 70Q28 84 16 82Q0 78 4 58Q12 30 20 8Z"/>
+                                </g>
+                                <g transform="translate(92 148) scale(1.15)" fill="#fff">
+                                    <g class="v-logo-dpad">
+                                        <rect x="26" y="26" width="10" height="28" rx="4"/>
+                                        <rect x="17" y="35" width="28" height="10" rx="4"/>
+                                    </g>
+                                    <circle class="v-logo-dot" cx="86" cy="26" r="5.5"/>
+                                    <circle class="v-logo-dot" cx="76" cy="36" r="5.5"/>
+                                    <circle class="v-logo-dot" cx="96" cy="36" r="5.5"/>
+                                    <circle class="v-logo-dot" cx="86" cy="46" r="5.5"/>
+                                </g>
+                            </mask>
+                        </defs>
+                        <polygon class="v-logo-outline" points="60,32 60,368 356,200" pathLength="1000"/>
+                        <g mask="url(#v-logo-cut)">
+                            <polygon class="v-logo-tri" points="85,65 85,335 320,200" stroke="#fff" stroke-width="52" stroke-linejoin="round"/>
+                        </g>
+                    </svg>
+                </div>
+                <div class="v-logo-word" aria-hidden="true"><span><i style="--n:0">P</i></span><span><i style="--n:1">l</i></span><span><i style="--n:2">a</i></span><span><i style="--n:3">y</i></span><span><i style="--n:4">W</i></span><span><i style="--n:5">e</i></span><span><i style="--n:6">b</i></span></div>
+            </div>
             <div class="v-spinner" aria-hidden="true"></div>
             <p id="v-loading-text">Chargement du Villaggio…</p>
         </div>
 
         <div class="v-error hidden" id="v-error">
-            <img class="v-loading-logo" src="../assets/BrainrotStar_logo_fc.png" alt="Brainrot Star">
+            <img class="v-error-logo" src="https://raw.githubusercontent.com/schoolllex/images/refs/heads/main/BrainrotStar/BrainrotStar_logo_fc.png" alt="Brainrot Star">
             <p id="v-error-text">Impossible de charger ton Villaggio.</p>
             <div class="v-error-actions">
                 <button class="v-btn v-btn-build" id="v-error-retry" type="button">Réessayer</button>
@@ -164,6 +209,8 @@
     <script src="../assets/playweb-analytics.js"></script>
     <script src="../assets/auth-gate.js"></script>
     <script src="../assets/game-notif.js"></script>
+    <script src="../assets/shared-nav.js"></script>
+    <script src="../assets/mobile-nav.js"></script>
     <script src="village.base.js"></script>
     <script src="village.render.js"></script>
     <script src="village.home.js"></script>

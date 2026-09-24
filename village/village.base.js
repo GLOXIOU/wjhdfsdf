@@ -44,7 +44,7 @@
 
     const $ = (id) => document.getElementById(id);
     const ids = {
-        app: "v-app", canvas: "v-canvas",
+        app: "v-app", canvas: "v-canvas", sea: "v-sea", nav: "v-nav",
         top: "v-top", title: "v-title", subtitle: "v-subtitle",
         trophyPill: "v-trophy-pill", trophies: "v-trophies", league: "v-league",
         shieldPill: "v-shield-pill", shield: "v-shield",
@@ -60,7 +60,7 @@
         placeCancel: "v-place-cancel", placeConfirm: "v-place-confirm",
         sheet: "v-sheet", sheetBackdrop: "v-sheet-backdrop", sheetTitle: "v-sheet-title",
         sheetBody: "v-sheet-body", sheetClose: "v-sheet-close",
-        battle: "v-battle", btName: "v-bt-name", btSub: "v-bt-sub", btLoot: "v-bt-loot", btStakes: "v-bt-stakes",
+        battle: "v-battle", btTop: "v-bt-top", btBottom: "v-bt-bottom", btName: "v-bt-name", btSub: "v-bt-sub", btLoot: "v-bt-loot", btStakes: "v-bt-stakes",
         btTimerLabel: "v-bt-timer-label", btTimer: "v-bt-timer", btStars: "v-bt-stars", btPct: "v-bt-pct",
         btLooted: "v-bt-looted", btTroops: "v-bt-troops", btHint: "v-bt-hint",
         btNext: "v-bt-next", btEnd: "v-bt-end", btSpeed: "v-bt-speed",
@@ -335,6 +335,46 @@
         }, ttl);
     }
     V.toast = toast;
+
+    /* ======================================================================
+       CHARGEMENT
+       Plein ecran : le logo PlayWeb anime. En superposition (lancement d'une
+       bataille) : un simple voile avec une roue.
+       ====================================================================== */
+
+    /** Duree de l'entree du logo : on ne coupe pas l'animation en plein milieu. */
+    const LOGO_INTRO_MS = V.cfg.REDUCED_MOTION ? 0 : 1750;
+    let loaderShownAt = performance.now();
+    let loaderTimer = 0;
+
+    V.loader = {
+        show(text, overlay = false) {
+            const el = V.ui.loading;
+            clearTimeout(loaderTimer);
+            V.ui.loadingText.textContent = text;
+            el.classList.toggle("is-overlay", overlay);
+            if (el.classList.contains("hidden")) {
+                // Repasser de display:none a visible relance les animations CSS.
+                el.classList.remove("hidden");
+                loaderShownAt = performance.now();
+            }
+            el.classList.remove("is-done");
+        },
+        /** Se resout quand le voile commence a disparaitre. */
+        hide() {
+            const el = V.ui.loading;
+            const wait = el.classList.contains("is-overlay") ? 0 : Math.max(0, LOGO_INTRO_MS - (performance.now() - loaderShownAt));
+            clearTimeout(loaderTimer);
+            return new Promise((resolve) => {
+                loaderTimer = setTimeout(() => {
+                    el.classList.add("is-done");
+                    // Une fois invisible, display:none arrete toutes ses animations.
+                    loaderTimer = setTimeout(() => el.classList.add("hidden"), 400);
+                    resolve();
+                }, wait);
+            });
+        }
+    };
 
     /* ======================================================================
        PANNEAUX DU BAS (feuilles)
