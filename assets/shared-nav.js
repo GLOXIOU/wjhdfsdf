@@ -47,11 +47,6 @@ document.addEventListener("DOMContentLoaded", () => {
         redirectToExternalPage("profil/index.html");
     });
 
-    document.querySelector("#friends-card")?.addEventListener("click", (event) => {
-        event.preventDefault();
-        redirectToExternalPage("https://llextv.github.io/PlayWeb.front/amis/index.html?token=${encodeURIComponent(token)}");
-    });
-
     if (window.lucide && typeof window.lucide.createIcons === "function") {
         window.lucide.createIcons();
     }
