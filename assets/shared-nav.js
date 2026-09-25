@@ -47,6 +47,11 @@ document.addEventListener("DOMContentLoaded", () => {
         redirectToExternalPage("profil/index.html");
     });
 
+    document.querySelector("#friends-card")?.addEventListener("click", (event) => {
+        event.preventDefault();
+        redirectToExternalPage("amis/index.html");
+    });
+
     if (window.lucide && typeof window.lucide.createIcons === "function") {
         window.lucide.createIcons();
     }
