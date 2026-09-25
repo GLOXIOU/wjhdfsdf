@@ -1,5 +1,6 @@
 :root {
     --bg-color: #0a0a0a;
+    --bg-secondary: #171717;
     --card-bg: rgba(23, 23, 23, 0.8);
     --card-grad: linear-gradient(180deg, rgba(255, 255, 255, 0.055), rgba(255, 255, 255, 0.025));
     --card-grad-hover: linear-gradient(180deg, rgba(255, 255, 255, 0.075), rgba(255, 255, 255, 0.035));
@@ -1350,18 +1351,6 @@ canvas.touch-mode-active {
     border-radius: 8px;
 }
 
-/* Navbar disabled during game */
-body.game-active .navbar .btn-nav {
-    opacity: 0.35;
-    pointer-events: none;
-    filter: grayscale(0.5);
-    cursor: default;
-}
-
-body.game-active .navbar .logo a {
-    pointer-events: none;
-}
-
 /* Card selection animations */
 @keyframes cardPulse {
     0% {
@@ -1420,12 +1409,81 @@ body.game-active .navbar .logo a {
    Combat facon Clash Royale : HUD, arene, main, mana
    ========================================================================== */
 
-body.game-active .navbar {
-    display: none;
+/* En partie la navbar reste accessible, en version compacte : sa hauteur
+   (--cr-nav-h) est retiree de celle de l'arene pour que tout tienne a l'ecran.
+   Quitter passe par le modal #leave-game-modal (voir game.js). */
+body.game-active {
+    --cr-nav-h: 66px;
 }
 
 body.game-active .container {
     padding-top: max(0.75rem, env(safe-area-inset-top));
+}
+
+body.game-active .navbar {
+    padding: 0.45rem 0.9rem;
+    border-radius: 16px;
+    margin-bottom: 0.6rem;
+    gap: 0.75rem;
+}
+
+body.game-active .logo-image {
+    height: 40px;
+}
+
+body.game-active .nav-buttons {
+    flex-wrap: nowrap;
+    gap: 0.45rem;
+}
+
+body.game-active .btn-nav {
+    flex-direction: row;
+    gap: 0.35rem;
+    padding: 0.45rem 0.75rem;
+    border-radius: 10px;
+    font-size: 0.82rem;
+}
+
+/* lucide remplace les <i> par des <svg> : on cible les deux. */
+body.game-active .btn-nav i,
+body.game-active .btn-nav svg {
+    width: 16px;
+    height: 16px;
+}
+
+@media (max-width: 900px) {
+    body.game-active .btn-nav span {
+        display: none;
+    }
+}
+
+@media (max-width: 520px) {
+    body.game-active .navbar {
+        padding: 0.45rem 0.6rem;
+    }
+
+    body.game-active .logo-image {
+        height: 30px;
+    }
+
+    body.game-active .nav-buttons {
+        gap: 0.35rem;
+    }
+
+    body.game-active .btn-nav {
+        padding: 0.45rem 0.55rem;
+    }
+}
+
+/* Tres petits ecrans : le logo fait doublon avec "Accueil". */
+@media (max-width: 340px) {
+    body.game-active .navbar {
+        justify-content: center;
+    }
+
+    body.game-active .navbar .logo {
+        display: none;
+    }
 }
 
 #game {
@@ -1526,7 +1584,7 @@ body.game-active .container {
 /* L'arene garde son format 9:4 et tient en hauteur (iPad paysage). */
 .cr-arena canvas {
     display: block;
-    height: min(calc(100vh - 255px), calc((min(100vw, 1100px) - 4rem) * 0.4444));
+    height: min(calc(100vh - 280px - var(--cr-nav-h, 0px)), calc((min(100vw, 1100px) - 4rem) * 0.4444));
     width: auto;
     max-width: 100%;
     aspect-ratio: 900 / 400;
@@ -1538,7 +1596,7 @@ body.game-active .container {
 
 @supports (height: 1dvh) {
     .cr-arena canvas {
-        height: min(calc(100dvh - 255px), calc((min(100vw, 1100px) - 4rem) * 0.4444));
+        height: min(calc(100dvh - 280px - var(--cr-nav-h, 0px)), calc((min(100vw, 1100px) - 4rem) * 0.4444));
     }
 }
 
@@ -1832,12 +1890,12 @@ body.game-active .container {
 
 /* Portrait : l'arene pivote (joueur en bas) et prend toute la hauteur disponible. */
 .cr-arena.is-portrait canvas {
-    height: min(calc(100vh - 290px), calc((100vw - 2rem) * 2.25));
+    height: min(calc(100vh - 290px - var(--cr-nav-h, 0px)), calc((100vw - 2rem) * 2.25));
     aspect-ratio: 400 / 900;
 }
 
 @supports (height: 1dvh) {
     .cr-arena.is-portrait canvas {
-        height: min(calc(100dvh - 290px), calc((100vw - 2rem) * 2.25));
+        height: min(calc(100dvh - 290px - var(--cr-nav-h, 0px)), calc((100vw - 2rem) * 2.25));
     }
 }

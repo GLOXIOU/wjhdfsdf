@@ -13,6 +13,10 @@ let selectedDeck = [];
 let currentRoomId = null;
 let isInvitationAccepted = false;
 let isInvitationWaiting = false;
+// Partie trouvee par le matchmaking : les deux joueurs sont prets des qu'ils
+// valident leur deck, sans passer par l'invitation a accepter.
+let isMatchmakingGame = false;
+let matchEnded = false;
 
 
 
@@ -285,6 +289,8 @@ function connectGameSocket(roomId) {
 
   gameSocket.on('ended', (payload) => {
     if (!payload) return;
+    matchEnded = true;
+    closeLeaveGameModal();
     window.PlayWebAnalytics?.setStatus('online');
     window.PlayWebAnalytics?.track(
       payload.winnerId === localPlayerId ? 'match_won' : 'match_lost'
@@ -317,6 +323,63 @@ function disconnectGameSocket() {
 
 window.addEventListener('pagehide', disconnectGameSocket);
 
+/* ==========================================================================
+   NAVBAR PENDANT UNE PARTIE
+   --------------------------------------------------------------------------
+   La navbar partagee reste visible pendant le combat. Tout clic dessus (logo
+   compris) passe d'abord par un modal de confirmation, pour ne pas quitter la
+   partie par erreur.
+   ========================================================================== */
+
+const leaveGameModal = document.getElementById('leave-game-modal');
+let pendingNavTarget = null;
+let leaveConfirmed = false;
+
+function isMatchInProgress() {
+  return document.body.classList.contains('game-active') && !matchEnded;
+}
+
+function openLeaveGameModal(target) {
+  pendingNavTarget = target;
+  selectCard(null);
+  leaveGameModal.style.display = 'flex';
+  document.getElementById('leave-game-stay').focus();
+}
+
+function closeLeaveGameModal() {
+  pendingNavTarget = null;
+  leaveGameModal.style.display = 'none';
+}
+
+// En phase de capture : on passe avant les handlers propres aux boutons
+// (le Profil redirige en JS, ce n'est pas un simple lien).
+document.querySelector('.navbar')?.addEventListener('click', (ev) => {
+  if (leaveConfirmed || !isMatchInProgress()) return;
+  const target = ev.target.closest('a, button');
+  if (!target) return;
+  ev.preventDefault();
+  ev.stopPropagation();
+  openLeaveGameModal(target);
+}, true);
+
+document.getElementById('leave-game-stay').addEventListener('click', closeLeaveGameModal);
+leaveGameModal.addEventListener('click', (ev) => {
+  if (ev.target === leaveGameModal) closeLeaveGameModal();
+});
+document.addEventListener('keydown', (ev) => {
+  if (ev.key === 'Escape' && leaveGameModal.style.display === 'flex') closeLeaveGameModal();
+});
+
+document.getElementById('leave-game-confirm').addEventListener('click', () => {
+  const target = pendingNavTarget;
+  closeLeaveGameModal();
+  if (!target) return;
+  // On rejoue le clic d'origine, cette fois sans l'intercepter.
+  leaveConfirmed = true;
+  target.click();
+  leaveConfirmed = false;
+});
+
 /**
  * Applique l'etat de room recu : gere la phase d'invitation puis le jeu.
  * N'est appele que lorsque l'etat joueurs change reellement, plus a chaque
@@ -337,7 +400,12 @@ function applyRoomState(room) {
     const title = document.getElementById('invitation-title');
     const message = document.getElementById('invitation-message');
 
-    if (isInvitationWaiting && !isInvitationAccepted && opponent) {
+    if (isMatchmakingGame && opponent) {
+      title.textContent = '⚔️ ' + opponent.name;
+      message.textContent = opponent.deckReady
+        ? '✅ ' + opponent.name + ' a validé son deck ! Démarrage du combat...'
+        : 'En attente que ' + opponent.name + ' choisisse son deck...';
+    } else if (isInvitationWaiting && !isInvitationAccepted && opponent) {
       title.textContent = '🤝 ' + opponent.name + ' a rejoint !';
       message.textContent = opponent.deckReady
         ? '✅ ' + opponent.name + ' a accepté ! Démarrage du combat...'
@@ -420,6 +488,7 @@ document.getElementById('matchmaking-btn')?.addEventListener('click', async () =
     if (payload.success && payload.roomId) {
       // Match trouvé immédiatement
       console.log('✅ Match trouvé immédiatement!');
+      isMatchmakingGame = true;
       clearMatchmakingPoll();
       roomInput.value = payload.roomId;
       hideMatchmakingWaiting();
@@ -491,6 +560,7 @@ function startMatchmakingPoll(token) {
       if (data.type === 'matchFound' && data.roomId && data.roomId.trim() !== '') {
         // Match trouvé!
         console.log('✅ Match trouvé! Room:', data.roomId);
+        isMatchmakingGame = true;
         clearMatchmakingPoll();
         roomInput.value = data.roomId;
         
@@ -1174,7 +1244,8 @@ document.getElementById('confirm-deck').addEventListener('click', async () => {
     // Le createur de l'arene est pret des qu'il a valide son deck. Le second
     // joueur, lui, ne l'est qu'apres avoir accepte l'invitation : auparavant
     // il etait marque pret d'office, avant meme de voir le modal.
-    if (data.waitingForOpponent) markReady();
+    // En matchmaking il n'y a pas d'invitation : valider son deck suffit.
+    if (data.waitingForOpponent || isMatchmakingGame) markReady();
   } catch (e) {
     console.error('Join error:', e);
     alert('Erreur de connexion');
@@ -1193,8 +1264,14 @@ function showInvitationModal(joinData) {
   const rejectBtn = document.getElementById('reject-invitation-btn');
   const waitingBtn = document.getElementById('waiting-btn');
   
-  // Si on est le premier joueur (on invite)
-  if (joinData.waitingForOpponent) {
+  if (isMatchmakingGame) {
+    title.textContent = '⚔️ Adversaire trouvé';
+    message.textContent = 'En attente que ton adversaire choisisse son deck...';
+    acceptBtn.style.display = 'none';
+    rejectBtn.style.display = 'none';
+    waitingBtn.style.display = 'flex';
+  } else if (joinData.waitingForOpponent) {
+    // Premier joueur : c'est lui qui invite.
     isInvitationWaiting = true;
     title.textContent = '🎮 Partie créée';
     message.textContent = `Tu as créé une arène. En attente qu'un ami accepte ton invitation...`;
