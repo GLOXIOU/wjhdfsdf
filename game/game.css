@@ -1530,6 +1530,14 @@ body.game-active .btn-nav svg {
 .cr-side.is-me .cr-name { color: #93c5fd; }
 .cr-side.is-foe .cr-name { color: #fca5a5; }
 
+/* Adversaire deconnecte (delai de grace en cours) */
+.cr-side.is-away {
+    opacity: 0.55;
+    border-style: dashed;
+}
+
+.cr-side.is-away .cr-name::before { content: '📡 '; }
+
 .cr-crowns {
     display: flex;
     gap: 2px;

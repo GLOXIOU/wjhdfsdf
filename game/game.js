@@ -187,11 +187,19 @@ function showGameEndedOverlay(payload) {
     rewardsHTML = `<div class="game-end-rewards"><div class="rewards-title">🎁 Récompenses</div><div class="rewards-grid">${items.join('')}</div></div>`;
   }
 
+  const forfeit = payload.reason === 'forfeit';
   const title = draw ? 'ÉGALITÉ' : isWinner ? 'VICTOIRE !' : 'DÉFAITE';
-  const emoji = draw ? '🤝' : isWinner ? '🏆' : '💥';
-  const sub = draw
-    ? 'Personne n’a pris l’avantage.'
-    : isWinner ? 'Tu as détruit plus de tours que ton adversaire !' : `<strong>${escapeHtml(payload.winnerName)}</strong> a gagné`;
+  const emoji = draw ? '🤝' : isWinner ? (forfeit ? '🏳️' : '🏆') : '💥';
+  const winText = {
+    king: 'Tu as détruit la tour du roi !',
+    crowns: 'Tu as détruit plus de tours que ton adversaire !',
+    towers: 'Les tours adverses étaient plus abîmées que les tiennes.',
+    forfeit: 'Ton adversaire a quitté la partie.'
+  };
+  let sub = draw
+    ? (forfeit ? 'Les deux joueurs ont quitté la partie.' : 'Personne n’a pris l’avantage.')
+    : isWinner ? (winText[payload.reason] || winText.crowns) : `<strong>${escapeHtml(payload.winnerName)}</strong> a gagné`;
+  if (isWinner && forfeit && !rewards) sub += '<br><small>Pas de récompense : la partie a duré moins d’une minute.</small>';
   content.innerHTML = `
     <div class="game-end-emoji">${emoji}</div>
     <div class="game-end-title">${title}</div>
@@ -370,10 +378,24 @@ document.addEventListener('keydown', (ev) => {
   if (ev.key === 'Escape' && leaveGameModal.style.display === 'flex') closeLeaveGameModal();
 });
 
-document.getElementById('leave-game-confirm').addEventListener('click', () => {
+/**
+ * Abandon explicite, confirme par le serveur. Le 'leave' envoye pendant la
+ * fermeture de la page peut se perdre : l'adversaire attendait alors la fin
+ * du delai de grace au lieu de gagner tout de suite.
+ */
+function quitMatch() {
+  return new Promise((resolve) => {
+    if (!gameSocket || !gameSocket.connected) return resolve();
+    const timer = setTimeout(resolve, 800);
+    gameSocket.emit('leave', {}, () => { clearTimeout(timer); resolve(); });
+  });
+}
+
+document.getElementById('leave-game-confirm').addEventListener('click', async () => {
   const target = pendingNavTarget;
   closeLeaveGameModal();
   if (!target) return;
+  await quitMatch();
   // On rejoue le clic d'origine, cette fois sans l'intercepter.
   leaveConfirmed = true;
   target.click();
@@ -393,14 +415,25 @@ function applyRoomState(room) {
   const gameVisible = gameEl.style.display === 'block';
 
   if (invModalVisible) {
-    if (room.players.length !== 2) return;
+    if (room.players.length !== 2) {
+      // L'adversaire est reparti avant le combat : le serveur a libere sa place.
+      if (waitingOpponentName && !gameStartScheduled) {
+        showWaitingDeadEnd('🚪 ' + waitingOpponentName + ' est parti', 'Ton adversaire a quitté la partie avant le combat.');
+      }
+      return;
+    }
 
     const opponent = room.players.find(p => p.id !== localPlayerId);
     const bothReady = room.players.every(p => p.deckReady === true);
     const title = document.getElementById('invitation-title');
     const message = document.getElementById('invitation-message');
+    if (opponent) {
+      waitingOpponentName = opponent.name;
+      clearTimeout(matchmakingWaitTimer);
+    }
 
     if (isMatchmakingGame && opponent) {
+      setWaitingButtons({ waiting: true, leaveLabel: '🚪 Quitter' });
       title.textContent = '⚔️ ' + opponent.name;
       message.textContent = opponent.deckReady
         ? '✅ ' + opponent.name + ' a validé son deck ! Démarrage du combat...'
@@ -416,6 +449,7 @@ function applyRoomState(room) {
     }
 
     if (bothReady) {
+      setWaitingButtons({ waiting: true, leaveLabel: null });
       title.textContent = '🚀 Démarrage...';
       message.textContent = 'Tous les joueurs sont prêts !';
       if (room.started && !gameStartScheduled) {
@@ -441,72 +475,109 @@ function applyRoomState(room) {
 
 let gameStartScheduled = false;
 
+/** Adversaire vu dans la salle d'attente, pour annoncer son depart. */
+let waitingOpponentName = null;
+let matchmakingWaitTimer = null;
+/** En matchmaking, delai laisse a l'adversaire pour valider son deck. */
+const MATCHMAKING_DECK_TIMEOUT_MS = 90_000;
+
+function setWaitingButtons({ waiting, leaveLabel }) {
+  document.getElementById('waiting-btn').style.display = waiting ? 'flex' : 'none';
+  const leaveBtn = document.getElementById('leave-waiting-btn');
+  leaveBtn.style.display = leaveLabel ? 'flex' : 'none';
+  if (leaveLabel) leaveBtn.textContent = leaveLabel;
+}
+
+/** La salle d'attente ne peut plus aboutir : on le dit et on propose de repartir. */
+function showWaitingDeadEnd(title, message) {
+  clearTimeout(matchmakingWaitTimer);
+  document.getElementById('invitation-title').textContent = title;
+  document.getElementById('invitation-message').textContent = message;
+  document.getElementById('accept-invitation-btn').style.display = 'none';
+  document.getElementById('reject-invitation-btn').style.display = 'none';
+  setWaitingButtons({ waiting: false, leaveLabel: '↩️ Retour au lobby' });
+}
+
+// Quitter la salle d'attente : on recharge le lobby. La fermeture de la page
+// previent le serveur, qui libere la place et avertit l'autre joueur.
+document.getElementById('leave-waiting-btn').addEventListener('click', async () => {
+  await quitMatch();
+  window.location.href = window.location.pathname;
+});
+
 joinBtn.addEventListener('click', async ()=>{
   showDeckSelector();
 });
 
-let matchmakingPollInterval = null;
 let matchmakingTimerInterval = null;
 let matchmakingStartTime = null;
 let matchmakingEventSource = null;
+let matchmakingRetryTimer = null;
+/** true du clic sur "Matchmaking" jusqu'au match trouve ou a l'annulation. */
+let isSearchingMatch = false;
 
 document.getElementById('matchmaking-btn')?.addEventListener('click', async () => {
+  const token = window.BrainrotAuth?.getToken?.() || '';
+  if (!token) {
+    console.error('❌ Pas de token disponible');
+    alert('Erreur: Token non disponible');
+    return;
+  }
+
+  window.PlayWebAnalytics?.track('matchmaking_started');
+  showMatchmakingWaiting();
+  isSearchingMatch = true;
+  matchmakingStartTime = Date.now();
+  if (matchmakingTimerInterval) clearInterval(matchmakingTimerInterval);
+  matchmakingTimerInterval = setInterval(updateMatchmakingTimer, 1000);
+
   try {
-    const token = window.BrainrotAuth?.getToken?.() || '';
-    if (!token) {
-      console.error('❌ Pas de token disponible');
-      alert('Erreur: Token non disponible');
-      return;
-    }
-    
-    console.log('🎯 Démarrage du matchmaking...');
-    window.PlayWebAnalytics?.track('matchmaking_started');
-    
-    // Afficher l'écran d'attente
-    showMatchmakingWaiting();
-    matchmakingStartTime = Date.now();
-    
-    // Appeler l'endpoint de matchmaking
-    const res = await fetch(window.API_BASE_URL + '/game/matchmaking', {
-      method: 'POST',
-      headers: { 
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json'
-      }
-    });
-    
-    if (!res.ok) {
-      console.error('❌ Erreur API matchmaking:', res.status);
-      hideMatchmakingWaiting();
-      alert('Erreur lors de la recherche. Réessaye !');
-      return;
-    }
-    
-    const payload = await res.json();
-    console.log('📡 Réponse matchmaking:', payload);
-    
-    if (payload.success && payload.roomId) {
-      // Match trouvé immédiatement
-      console.log('✅ Match trouvé immédiatement!');
-      isMatchmakingGame = true;
-      clearMatchmakingPoll();
-      roomInput.value = payload.roomId;
-      hideMatchmakingWaiting();
-      showDeckSelector();
-    } else if (payload.success) {
-      // En attente, commencer le polling SSE
-      console.log('⏳ En attente, démarrage SSE...');
-      startMatchmakingPoll(token);
-    } else {
-      hideMatchmakingWaiting();
-      alert(payload.message || 'Erreur lors du matchmaking');
-    }
+    await requestMatch(token);
   } catch (err) {
     console.error('❌ Matchmaking error:', err);
     hideMatchmakingWaiting();
-    alert('Erreur réseau. Réessaye !');
+    alert(err.message || 'Erreur réseau. Réessaye !');
   }
 });
+
+/**
+ * S'inscrit dans la file. Le serveur repond directement la room si un
+ * adversaire attend deja ; sinon on suit la file en direct (SSE).
+ * L'inscription est idempotente : on peut la rejouer apres une coupure.
+ */
+async function requestMatch(token) {
+  const res = await fetch(window.API_BASE_URL + '/game/matchmaking', {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json'
+    }
+  });
+  const payload = await res.json().catch(() => null);
+  if (!res.ok || !payload?.success) {
+    throw new Error(payload?.message || 'Erreur lors de la recherche. Réessaye !');
+  }
+  if (!isSearchingMatch) return;
+  if (payload.roomId) onMatchFound(payload.roomId);
+  else openMatchmakingStream(token);
+}
+
+function onMatchFound(roomId) {
+  console.log('✅ Match trouvé! Room:', roomId);
+  isMatchmakingGame = true;
+  clearMatchmakingPoll();
+  roomInput.value = roomId;
+
+  const titleEl = document.getElementById('matchmaking-title');
+  const msgEl = document.getElementById('matchmaking-message');
+  if (titleEl) titleEl.textContent = '🎉 Match trouvé !';
+  if (msgEl) msgEl.textContent = 'Choisis ton deck...';
+
+  setTimeout(() => {
+    hideMatchmakingWaiting();
+    showDeckSelector();
+  }, 700);
+}
 
 function showMatchmakingWaiting() {
   const lobbyEl = document.getElementById('lobby');
@@ -533,67 +604,58 @@ function updateMatchmakingTimer() {
   }
 }
 
-function startMatchmakingPoll(token) {
-  // Mettre à jour le timer toutes les secondes
-  if (matchmakingTimerInterval) clearInterval(matchmakingTimerInterval);
-  matchmakingTimerInterval = setInterval(updateMatchmakingTimer, 1000);
-  
-  console.log('🔌 Connexion SSE pour matchmaking...');
-  
-  // Connecter à SSE pour les mises à jour du matchmaking
-  // Note: EventSource ne peut pas envoyer de headers, on utilise un query param
-  matchmakingEventSource = new EventSource(`${window.API_BASE_URL}/game/matchmaking/watch?token=${encodeURIComponent(token)}`);
+function showMatchmakingStats(stats) {
+  const queueEl = document.getElementById('queue-count');
+  const matchesEl = document.getElementById('active-matches');
+  if (queueEl) queueEl.textContent = stats.playersInQueue || 0;
+  if (matchesEl) matchesEl.textContent = stats.activeMatches || 0;
+}
 
-  matchmakingEventSource.addEventListener('message', (event) => {
+function openMatchmakingStream(token) {
+  if (matchmakingEventSource) matchmakingEventSource.close();
+
+  // EventSource ne peut pas envoyer d'en-tete : le token passe en query.
+  const source = new EventSource(`${window.API_BASE_URL}/game/matchmaking/watch?token=${encodeURIComponent(token)}`);
+  matchmakingEventSource = source;
+
+  source.addEventListener('message', (event) => {
     try {
-      console.log('📨 Message SSE reçu:', event.data);
       const data = JSON.parse(event.data);
-
-      if (data.type === 'stats' && data.stats) {
-        // Mettre à jour les stats
-        const queueEl = document.getElementById('queue-count');
-        const matchesEl = document.getElementById('active-matches');
-        if (queueEl) queueEl.textContent = data.stats.playersInQueue || 0;
-        if (matchesEl) matchesEl.textContent = data.stats.activeMatches || 0;
-      }
-
-      if (data.type === 'matchFound' && data.roomId && data.roomId.trim() !== '') {
-        // Match trouvé!
-        console.log('✅ Match trouvé! Room:', data.roomId);
-        isMatchmakingGame = true;
-        clearMatchmakingPoll();
-        roomInput.value = data.roomId;
-        
-        // Animation de transition
-        const titleEl = document.getElementById('matchmaking-title');
-        const msgEl = document.getElementById('matchmaking-message');
-        if (titleEl) titleEl.textContent = '🎉 Match trouvé!';
-        if (msgEl) msgEl.textContent = 'Prépare-toi pour le combat...';
-        
-        setTimeout(() => {
-          hideMatchmakingWaiting();
-          showDeckSelector();
-        }, 1500);
-      }
+      if (data.type === 'stats' && data.stats) showMatchmakingStats(data.stats);
+      if (data.type === 'matchFound' && data.roomId && data.roomId.trim() !== '') onMatchFound(data.roomId);
     } catch (err) {
       console.error('❌ SSE parse error:', err, event.data);
     }
   });
 
-  matchmakingEventSource.onerror = () => {
-    console.error('❌ SSE connection error');
-    clearMatchmakingPoll();
+  // Coupure (reseau, redemarrage du serveur) : on se reinscrit puis on rouvre
+  // le flux. Avant, la recherche restait affichee mais ne pouvait plus aboutir.
+  source.onerror = () => {
+    if (matchmakingEventSource !== source) return;
+    source.close();
+    matchmakingEventSource = null;
+    scheduleMatchmakingRetry(token);
   };
 }
 
+function scheduleMatchmakingRetry(token) {
+  clearTimeout(matchmakingRetryTimer);
+  matchmakingRetryTimer = setTimeout(() => {
+    if (!isSearchingMatch) return;
+    requestMatch(token).catch((err) => {
+      console.warn('Matchmaking indisponible, nouvel essai...', err);
+      scheduleMatchmakingRetry(token);
+    });
+  }, 2500);
+}
+
 function clearMatchmakingPoll() {
+  isSearchingMatch = false;
+  clearTimeout(matchmakingRetryTimer);
+  matchmakingRetryTimer = null;
   if (matchmakingEventSource) {
     matchmakingEventSource.close();
     matchmakingEventSource = null;
-  }
-  if (matchmakingPollInterval) {
-    clearInterval(matchmakingPollInterval);
-    matchmakingPollInterval = null;
   }
   if (matchmakingTimerInterval) {
     clearInterval(matchmakingTimerInterval);
@@ -605,16 +667,17 @@ function clearMatchmakingPoll() {
 document.getElementById('cancel-matchmaking-btn')?.addEventListener('click', async () => {
   try {
     const token = window.BrainrotAuth?.getToken?.() || '';
+    clearMatchmakingPoll();
     if (!token) return;
-    
+
     await fetch(window.API_BASE_URL + '/game/matchmaking', {
       method: 'DELETE',
-      headers: { 
+      headers: {
         'Authorization': `Bearer ${token}`,
         'Content-Type': 'application/json'
       }
     });
-    
+
     hideMatchmakingWaiting();
   } catch (err) {
     console.error('Cancel matchmaking error:', err);
@@ -623,34 +686,24 @@ document.getElementById('cancel-matchmaking-btn')?.addEventListener('click', asy
 });
 
 // Nettoyer le matchmaking quand l'utilisateur quitte la page
-const cleanupMatchmakingOnExit = async () => {
-  try {
-    const token = window.BrainrotAuth?.getToken?.() || '';
-    if (!token || !matchmakingEventSource) return;
-    
-    // Fermer la connexion SSE
-    if (matchmakingEventSource) {
-      matchmakingEventSource.close();
-    }
-    
-    // Envoyer une requête DELETE pour supprimer de la queue
-    await fetch(window.API_BASE_URL + '/game/matchmaking', {
-      method: 'DELETE',
-      headers: { 
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json'
-      },
-      // Keep-alive pour s'assurer que la requête est envoyée même si la page se ferme
-      keepalive: true
-    }).catch(() => {});
-  } catch (err) {
-    // Ignorer les erreurs lors du cleanup
-  }
+const cleanupMatchmakingOnExit = () => {
+  if (!isSearchingMatch) return;
+  const token = window.BrainrotAuth?.getToken?.() || '';
+  clearMatchmakingPoll();
+  if (!token) return;
+  // Keep-alive : la requete part meme si la page se ferme.
+  fetch(window.API_BASE_URL + '/game/matchmaking', {
+    method: 'DELETE',
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json'
+    },
+    keepalive: true
+  }).catch(() => {});
 };
 
 // Nettoyer quand l'utilisateur quitte la page
 window.addEventListener('beforeunload', cleanupMatchmakingOnExit);
-window.addEventListener('unload', cleanupMatchmakingOnExit);
 window.addEventListener('pagehide', cleanupMatchmakingOnExit);
 
 // Volontairement : on ne quitte PLUS la file d'attente quand l'onglet passe en
@@ -704,14 +757,14 @@ document.getElementById('invite-btn')?.addEventListener('click', async () => {
 });
 
 (async () => {
+  // Le pseudo est facultatif (le serveur le relit en base) : un echec ici ne
+  // doit plus empecher de rejoindre l'arene d'un lien d'invitation.
   try {
     const token = window.BrainrotAuth?.getToken?.() || '';
-    if (!token) return;
-    const res = await fetch(window.API_BASE_URL + '/user/stats', {
+    const res = token ? await fetch(window.API_BASE_URL + '/user/stats', {
       headers: { 'Authorization': `Bearer ${token}` }
-    });
-    if (!res.ok) return;
-    const payload = await res.json();
+    }) : null;
+    const payload = res && res.ok ? await res.json() : null;
     if (payload?.success && payload?.value?.pseudo) {
       playerPseudo = payload.value.pseudo;
     }
@@ -741,12 +794,14 @@ const hud = {
   elixirFill: document.getElementById('elixir-fill'),
   elixirCount: document.getElementById('elixir-count'),
   elixirX2: document.getElementById('elixir-x2'),
-  next: document.getElementById('next-card')
+  next: document.getElementById('next-card'),
+  foeSide: document.querySelector('.cr-side.is-foe')
 };
 
 const handCardElements = new Map(); // cardId -> element
 const SPELL_RADIUS = { bomb: 56, molotov: 52, freeze: 66, banana: 50 };
 let lastHudSignature = '';
+let lastFoeAway = false;
 let matchClock = null;
 let manaState = { value: 0, at: 0, max: 10 };
 let selectedCard = null;
@@ -780,6 +835,19 @@ function renderRoom(room) {
     hud.meCrowns.innerHTML = crownsHtml(me ? me.crowns || 0 : 0);
   }
   if (me && me.mana !== manaState.value) manaState = { value: me.mana, at: performance.now(), max: me.maxMana || 10 };
+
+  // Adversaire deconnecte : le serveur lui laisse un court delai pour revenir,
+  // sinon il abandonne et la victoire est pour nous.
+  const foeAway = !!(foe && foe.away);
+  if (foeAway !== lastFoeAway) {
+    lastFoeAway = foeAway;
+    hud.foeSide.classList.toggle('is-away', foeAway);
+    if (foe && !matchEnded) {
+      showGameToast(foeAway
+        ? `📡 ${foe.name} s'est déconnecté. S'il ne revient pas vite, tu gagnes !`
+        : `✅ ${foe.name} est de retour !`, foeAway ? 5000 : 2200);
+    }
+  }
   renderHand(me);
   renderNext(me);
 }
@@ -957,7 +1025,7 @@ function playCard(cardId, targetPos) {
  * alert() gelait tout l'onglet et, sur iPad, coupait la boucle de rendu.
  */
 let toastTimer = null;
-function showGameToast(text) {
+function showGameToast(text, duration = 2200) {
   let toast = document.getElementById('game-toast');
   if (!toast) {
     toast = document.createElement('div');
@@ -968,7 +1036,7 @@ function showGameToast(text) {
   toast.textContent = text;
   toast.classList.add('is-on');
   clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => toast.classList.remove('is-on'), 2200);
+  toastTimer = setTimeout(() => toast.classList.remove('is-on'), duration);
 }
 async function fetchAvailableCards() {
   try {
@@ -1262,14 +1330,19 @@ function showInvitationModal(joinData) {
   const buttons = document.getElementById('invitation-buttons');
   const acceptBtn = document.getElementById('accept-invitation-btn');
   const rejectBtn = document.getElementById('reject-invitation-btn');
-  const waitingBtn = document.getElementById('waiting-btn');
   
   if (isMatchmakingGame) {
     title.textContent = '⚔️ Adversaire trouvé';
     message.textContent = 'En attente que ton adversaire choisisse son deck...';
     acceptBtn.style.display = 'none';
     rejectBtn.style.display = 'none';
-    waitingBtn.style.display = 'flex';
+    setWaitingButtons({ waiting: true, leaveLabel: '🚪 Quitter' });
+    clearTimeout(matchmakingWaitTimer);
+    matchmakingWaitTimer = setTimeout(() => {
+      if (!gameStartScheduled && !waitingOpponentName) {
+        showWaitingDeadEnd('⌛ Adversaire introuvable', 'Ton adversaire n’a pas validé son deck à temps.');
+      }
+    }, MATCHMAKING_DECK_TIMEOUT_MS);
   } else if (joinData.waitingForOpponent) {
     // Premier joueur : c'est lui qui invite.
     isInvitationWaiting = true;
@@ -1277,14 +1350,14 @@ function showInvitationModal(joinData) {
     message.textContent = `Tu as créé une arène. En attente qu'un ami accepte ton invitation...`;
     acceptBtn.style.display = 'none';
     rejectBtn.style.display = 'none';
-    waitingBtn.style.display = 'flex';
+    setWaitingButtons({ waiting: true, leaveLabel: '🚪 Quitter' });
   } else {
     // Si on est le deuxième joueur (on accepte)
     title.textContent = '📨 Nouvelle invitation';
     message.textContent = `${joinData.invitation?.fromName || 'Un joueur'} t'invite à une partie. Acceptes-tu ?`;
     acceptBtn.style.display = 'block';
     rejectBtn.style.display = 'block';
-    waitingBtn.style.display = 'none';
+    setWaitingButtons({ waiting: false, leaveLabel: null });
     
     acceptBtn.onclick = async () => {
       await handleAcceptInvitation(joinData);
@@ -1314,7 +1387,6 @@ function handleAcceptInvitation(joinData) {
   const rejectBtn = document.getElementById('reject-invitation-btn');
   const title = document.getElementById('invitation-title');
   const message = document.getElementById('invitation-message');
-  const waitingBtn = document.getElementById('waiting-btn');
 
   acceptBtn.disabled = true;
   rejectBtn.disabled = true;
@@ -1325,7 +1397,7 @@ function handleAcceptInvitation(joinData) {
   message.textContent = 'Connecté avec ' + (joinData.invitation?.fromName || "l'autre joueur") + '. En attente de démarrage...';
   acceptBtn.style.display = 'none';
   rejectBtn.style.display = 'none';
-  waitingBtn.style.display = 'flex';
+  setWaitingButtons({ waiting: true, leaveLabel: '🚪 Quitter' });
 }
 
 async function handleRejectInvitation(joinData) {
@@ -1342,6 +1414,10 @@ async function handleRejectInvitation(joinData) {
         playerId: localPlayerId
       })
     });
+
+    // On quitte aussi la room temps reel : le serveur libere la place et
+    // l'invitant est prevenu au lieu d'attendre indefiniment.
+    disconnectGameSocket();
 
     // Retourner au lobby
     invitationModal.style.display = 'none';

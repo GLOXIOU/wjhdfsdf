@@ -378,7 +378,8 @@
       const t = (now - f.start) / f.d;
       if (t < 0 || t >= 1) continue;
       const a = t < 0.15 ? t / 0.15 : t > 0.8 ? (1 - t) / 0.2 : 1;
-      const y = 70 - 10 * (1 - Math.min(1, t * 5));
+      // En portrait, le haut de l'arene est occupe par le roi adverse et ses PV.
+      const y = (portrait ? CH / 2 - 60 : 70) - 10 * (1 - Math.min(1, t * 5));
       ctx.globalAlpha = a;
       ctx.font = `900 ${portrait ? 18 : 24}px Inter, system-ui, sans-serif`;
       ctx.textAlign = 'center';
@@ -405,10 +406,15 @@
 
   function drawTower(e, t, now) {
     const team = teamOf(e.ownerId);
-    const { x, y } = P(e.x, e.y);
     const r = e.radius || 22;
     const king = e.kind === 'king';
     const st = e.st || 0;
+    const bh = r * 1.55;
+    const at = P(e.x, e.y);
+    const x = at.x;
+    // En portrait le roi adverse touche le bord haut : on le descend juste
+    // assez pour que sa couronne reste dans l'arene.
+    const y = Math.max(at.y, bh * 0.62 + (king ? 26 : 18));
 
     ctx.fillStyle = 'rgba(0,0,0,0.25)';
     ctx.beginPath(); ctx.ellipse(x + 3, y + r * 0.85, r * 1.1, r * 0.45, 0, 0, Math.PI * 2); ctx.fill();
@@ -428,7 +434,6 @@
 
     // Base en pierre
     const bw = r * 1.9;
-    const bh = r * 1.55;
     const top = y - bh * 0.62;
     ctx.fillStyle = '#9ca3af';
     ctx.fillRect(x - bw / 2, top, bw, bh);
@@ -458,12 +463,17 @@
     const p = lerp(e, t);
     const ratio = Math.max(0, p.hp) / (e.maxHp || 1);
     const barW = king ? 64 : 50;
-    hpBar(x, top - (king ? 30 : 24), barW, ratio, team);
+    // PV au-dessus de la tour, ou en dessous quand ils sortiraient de l'arene
+    // (roi adverse en portrait) : avant, ses PV etaient tout simplement coupes.
+    const above = top - (king ? 30 : 24);
+    const below = above < 10;
+    const barY = below ? top + bh + 6 : above;
+    hpBar(x, barY, barW, ratio, team);
     ctx.font = '800 9px Inter, system-ui, sans-serif';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     ctx.fillStyle = '#fff';
-    ctx.fillText(String(Math.max(0, Math.round(p.hp))), x, top - (king ? 38 : 32));
+    ctx.fillText(String(Math.max(0, Math.round(p.hp))), x, below ? barY + 13 : top - (king ? 38 : 32));
   }
 
   function drawUnit(e, t, now) {
@@ -506,7 +516,10 @@
   }
 
   function drawZone(e, now) {
-    const { x, y: zy } = P(e.x, zy);
+    // (P(e.x, zy) lisait zy avant sa declaration : l'exception coupait chaque
+    // image tant qu'un molotov ou un glacon etait au sol, tours et unites
+    // disparaissaient.)
+    const { x, y: zy } = P(e.x, e.y);
     const r = e.radius || 50;
     const fade = e.removedAt ? Math.max(0, 1 - (now - e.removedAt) / FADE_MS) : 1;
     if (e.subtype === 'fire') {

@@ -236,6 +236,9 @@
               <span style="display:inline-block; animation:spin 1s linear infinite;">⏳</span>
               <span>En attente de l'adversaire...</span>
             </button>
+            <button id="leave-waiting-btn" class="btn-card" type="button" style="display:none; flex-direction:row; gap:8px; font-weight:800; white-space:nowrap;">
+              🚪 Quitter
+            </button>
           </div>
         </div>
       </section>
@@ -244,7 +247,7 @@
         <div style="background:var(--bg-secondary); border-radius:16px; padding:32px; text-align:center; max-width:400px; box-shadow:0 20px 60px rgba(0,0,0,0.5);">
           <div style="font-size:2rem; margin-bottom:16px;">🚪</div>
           <h2 id="leave-game-title" style="margin-bottom:12px; font-size:1.5rem; font-weight:900;">Quitter la partie ?</h2>
-          <p style="color:var(--text-muted); margin-bottom:24px; line-height:1.6;">Le combat continue sans toi : tes tours resteront sans défense.</p>
+          <p style="color:var(--text-muted); margin-bottom:24px; line-height:1.6;">Si tu quittes, tu abandonnes : ton adversaire gagne la partie.</p>
           <div style="display:flex; gap:12px; justify-content:center; flex-wrap:wrap;">
             <button id="leave-game-stay" class="btn-play" type="button" style="font-size:1.05rem; padding:0.9rem 1.4rem;">
               ⚔️ Rester
