@@ -19,10 +19,9 @@
     setTimeout(() => { el.style.opacity = '0'; }, 3000);
     setTimeout(() => el.remove(), 3400);
   }
-  // Gestion complète des notifications de défi et SSE
+  // Gestion complète des notifications de défi (temps réel)
   // S'ajoute à toutes les pages pour afficher les demandes de jeu en temps réel
 
-  let eventSource = null;
   let isInitialized = false;
 
   function injectStyles() {
@@ -265,7 +264,7 @@
       try {
         const token = await window.BrainrotAuth.waitUntilReady().catch(() => null);
         if (token) {
-          await fetch(window.API_BASE_URL + '/game/refuse-match', {
+          await apiFetch(window.API_BASE_URL + '/game/refuse-match', {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
@@ -297,93 +296,58 @@
     // Pas de .focus() pour éviter l'outline au pop
   }
 
-  // SSE — remplace registerUser() de script.js
-  async function initEventSource() {
+  function onNotify(data) {
+    if (!data) return;
+    switch (data.event) {
+      case 'asking_match': {
+        if (!data.status || !data.from) {
+          console.warn('[GameNotif] Données incomplètes pour asking_match');
+          return;
+        }
+        showGameNotification(data.from, data.status);
+        break;
+      }
+      case 'match_started': {
+        if (data.roomId) {
+          setTimeout(() => {
+            // Chemin relatif : le domaine d'hebergement n'est plus code en dur.
+            window.location.href = gameUrl(data.roomId);
+          }, 1000);
+        }
+        break;
+      }
+      case 'match_refused': {
+        // Emis par le serveur quand l'invite refuse depuis sa notification.
+        showRefusalToast(data.status || 'Ton adversaire');
+        break;
+      }
+      default:
+        break;
+    }
+  }
+
+  // Les notifications arrivent par la socket commune de la page (assets/realtime.js) :
+  // plus de flux SSE dedie, ni de reconnexion a gerer ici.
+  async function initNotifications() {
     if (isInitialized) return;
     isInitialized = true;
 
-    try {
-      const token = await window.BrainrotAuth.waitUntilReady().catch(() => null)
-                    || localStorage.getItem('brainrot_token');
-      if (!token) {
-        console.warn('[GameNotif] Pas de token, SSE désactivé');
-        return;
-      }
-
-      if (eventSource) {
-        try { eventSource.close(); } catch (e) {}
-        eventSource = null;
-      }
-
-      eventSource = new EventSource(window.API_BASE_URL + '/event/subscribe?token=' + encodeURIComponent(token));
-
-      eventSource.onopen = () => {
-        console.log('[GameNotif] ✅ Connexion SSE établie');
-      };
-
-      eventSource.onmessage = (ev) => {
-        try {
-          const data = JSON.parse(ev.data);
-          console.log('[GameNotif] 📨 Événement reçu:', data);
-
-          switch (data.event) {
-            case 'asking_match': {
-              if (!data.status || !data.from) {
-                console.warn('[GameNotif] Données incomplètes pour asking_match');
-                return;
-              }
-              showGameNotification(data.from, data.status);
-              break;
-            }
-            case 'match_started': {
-              if (data.roomId) {
-                console.log('[GameNotif] Redirection vers le match...');
-                setTimeout(() => {
-                  // Chemin relatif : le domaine d'hebergement n'est plus code en dur.
-                  window.location.href = gameUrl(data.roomId);
-                }, 1000);
-              }
-              break;
-            }
-            case 'match_cancelled': {
-              console.log('[GameNotif] Match annulé');
-              break;
-            }
-            case 'match_refused': {
-              // Emis par le serveur quand l'invite refuse depuis sa notification.
-              showRefusalToast(data.status || 'Ton adversaire');
-              break;
-            }
-            default:
-              console.log('[GameNotif] Événement non traité:', data.event);
-          }
-        } catch (e) {
-          console.error('[GameNotif] Erreur parsing:', e);
-        }
-      };
-
-      eventSource.onerror = (err) => {
-        console.error('[GameNotif] Erreur SSE:', err);
-        if (eventSource && eventSource.readyState === EventSource.CLOSED) {
-          console.log('[GameNotif] SSE fermé, reconnexion dans 5s…');
-          isInitialized = false;
-          setTimeout(initEventSource, 5000);
-        }
-      };
-    } catch (e) {
-      console.error('[GameNotif] Erreur initialisation:', e);
+    const token = await window.BrainrotAuth.waitUntilReady().catch(() => null);
+    if (!token) return;
+    if (!window.BrainrotRealtime?.on('notify', onNotify)) {
+      console.warn('[GameNotif] Connexion temps réel indisponible, notifications désactivées');
     }
   }
 
   if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', initEventSource);
+    document.addEventListener('DOMContentLoaded', initNotifications);
   } else {
-    initEventSource();
+    initNotifications();
   }
 
   // API globale
   window.GameNotif = {
     show: showGameNotification,
-    init: initEventSource
+    init: initNotifications
   };
 })();

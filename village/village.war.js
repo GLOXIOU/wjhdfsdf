@@ -31,9 +31,31 @@
        ====================================================================== */
 
     let simPromise = null;
+
+    /**
+     * Le source arrive par la socket de la page puis est importe depuis une URL
+     * blob : pas de requete HTTP de plus vers le proxy. Import direct en repli.
+     */
+    async function importSim() {
+        const url = `${cfg.API}/village/battle-sim.js`;
+        let blobUrl = "";
+        try {
+            const response = await apiFetch(url);
+            if (!response.ok) throw new Error(`HTTP ${response.status}`);
+            const source = await response.text();
+            blobUrl = URL.createObjectURL(new Blob([source], { type: "text/javascript" }));
+            return await import(blobUrl);
+        } catch (error) {
+            console.warn("[villaggio] moteur par la socket indisponible, import direct :", error);
+            return import(url);
+        } finally {
+            if (blobUrl) URL.revokeObjectURL(blobUrl);
+        }
+    }
+
     function loadSim() {
         if (!simPromise) {
-            simPromise = import(`${cfg.API}/village/battle-sim.js`).catch((error) => {
+            simPromise = importSim().catch((error) => {
                 simPromise = null;
                 throw error;
             });

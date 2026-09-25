@@ -213,7 +213,7 @@
         const controller = new AbortController();
         const timer = setTimeout(() => controller.abort(), 20_000);
         try {
-            const response = await fetch(`${V.cfg.API}${path}`, {
+            const response = await apiFetch(`${V.cfg.API}${path}`, {
                 method,
                 headers: {
                     "Content-Type": "application/json",

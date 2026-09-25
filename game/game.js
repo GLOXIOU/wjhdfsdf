@@ -220,8 +220,8 @@ function showGameEndedOverlay(payload) {
    TEMPS REEL : socket.io
    --------------------------------------------------------------------------
    Remplace l'ancien EventSource. Avantages concrets :
-     - une seule connexion, reutilisee (l'ancien SSE se reconnectait en boucle
-       des que le reseau mobile vacillait) ;
+     - une seule connexion : celle que la page a ouverte pour tous ses appels
+       d'API (assets/realtime.js), reutilisee par le combat ;
      - le serveur n'envoie que les deltas, pas la room entiere 10 fois/seconde ;
      - jouer une carte passe par la meme connexion : plus de requete HTTP
        (et donc plus de re-authentification) a chaque carte posee.
@@ -230,44 +230,26 @@ function showGameEndedOverlay(payload) {
 let gameSocket = null;
 let joinedRoomId = null;
 
-function connectGameSocket(roomId) {
-  const token = window.BrainrotAuth?.getToken?.() || '';
-  if (!token) { console.error('Pas de token, connexion temps reel impossible'); return; }
-  if (typeof io === 'undefined') { console.error('socket.io client non charge'); return; }
-
-  joinedRoomId = roomId;
-
-  if (gameSocket && gameSocket.connected) {
-    gameSocket.emit('join', { roomId }, onJoinAck);
-    return;
-  }
-
-  if (gameSocket) gameSocket.disconnect();
-
-  gameSocket = io(window.WS_URL, {
-    path: '/socket.io',
-    auth: { token },
-    transports: ['websocket', 'polling'],
-    reconnection: true,
-    reconnectionAttempts: Infinity,
-    reconnectionDelay: 500,
-    reconnectionDelayMax: 4000,
-    timeout: 10000
-  });
+/**
+ * La socket est celle de la page (assets/realtime.js), deja ouverte pour les
+ * appels d'API : le combat n'ouvre plus de connexion a lui. Les evenements du
+ * combat n'y sont branches qu'une fois.
+ */
+function bindGameSocket() {
+  if (gameSocket) return gameSocket;
+  gameSocket = window.BrainrotRealtime?.socket?.() || null;
+  if (!gameSocket) return null;
 
   gameSocket.on('connect', () => {
-    // A chaque (re)connexion on rejoint la room : le serveur renvoie alors
+    // A chaque reconnexion on rejoint la room : le serveur renvoie alors
     // un etat complet, ce qui resynchronise la partie apres une coupure.
+    if (!joinedRoomId) return;
     Arena.reset();
     gameSocket.emit('join', { roomId: joinedRoomId }, onJoinAck);
   });
 
-  gameSocket.on('connect_error', (err) => {
-    console.error('Connexion temps reel refusee :', err?.message || err);
-  });
-
   gameSocket.on('init', (data) => {
-    if (!data || !data.room) return;
+    if (!joinedRoomId || !data || !data.room) return;
     if (data.playerId) {
       localPlayerId = data.playerId;
       try { localStorage.setItem('playerId', localPlayerId); } catch {}
@@ -281,7 +263,7 @@ function connectGameSocket(roomId) {
   });
 
   gameSocket.on('players', (data) => {
-    if (!data || !Array.isArray(data.players)) return;
+    if (!joinedRoomId || !data || !Array.isArray(data.players)) return;
     if (!currentRoom) currentRoom = { id: joinedRoomId, players: [], entities: [] };
     currentRoom.players = data.players;
     currentRoom.started = data.started;
@@ -290,13 +272,13 @@ function connectGameSocket(roomId) {
     applyRoomState(currentRoom);
   });
 
-  gameSocket.on('spawn', (list) => Arena.spawn(list));
-  gameSocket.on('mv', (list) => Arena.move(list));
-  gameSocket.on('rm', (ids) => Arena.remove(ids));
-  gameSocket.on('fx', (list) => Arena.fx(list));
+  gameSocket.on('spawn', (list) => { if (joinedRoomId) Arena.spawn(list); });
+  gameSocket.on('mv', (list) => { if (joinedRoomId) Arena.move(list); });
+  gameSocket.on('rm', (ids) => { if (joinedRoomId) Arena.remove(ids); });
+  gameSocket.on('fx', (list) => { if (joinedRoomId) Arena.fx(list); });
 
   gameSocket.on('ended', (payload) => {
-    if (!payload) return;
+    if (!joinedRoomId || !payload) return;
     matchEnded = true;
     closeLeaveGameModal();
     window.PlayWebAnalytics?.setStatus('online');
@@ -313,6 +295,15 @@ function connectGameSocket(roomId) {
       Arena.shake(payload.intensity || 6, payload.duration || 300);
     }
   });
+
+  return gameSocket;
+}
+
+function connectGameSocket(roomId) {
+  if (!bindGameSocket()) { console.error('Connexion temps reel impossible'); return; }
+  joinedRoomId = roomId;
+  // Deconnectee : le 'connect' a venir rejoindra la room.
+  if (gameSocket.connected) gameSocket.emit('join', { roomId }, onJoinAck);
 }
 
 function onJoinAck(res) {
@@ -320,11 +311,10 @@ function onJoinAck(res) {
   console.error('Impossible de rejoindre la room :', res.error);
 }
 
+/** Quitte la room de combat ; la socket de la page, elle, reste ouverte. */
 function disconnectGameSocket() {
-  if (!gameSocket) return;
+  if (!gameSocket || !joinedRoomId) return;
   gameSocket.emit('leave');
-  gameSocket.disconnect();
-  gameSocket = null;
   joinedRoomId = null;
   Arena.reset();
 }
@@ -514,7 +504,7 @@ joinBtn.addEventListener('click', async ()=>{
 
 let matchmakingTimerInterval = null;
 let matchmakingStartTime = null;
-let matchmakingEventSource = null;
+let matchmakingWatching = false;
 let matchmakingRetryTimer = null;
 /** true du clic sur "Matchmaking" jusqu'au match trouve ou a l'annulation. */
 let isSearchingMatch = false;
@@ -545,11 +535,11 @@ document.getElementById('matchmaking-btn')?.addEventListener('click', async () =
 
 /**
  * S'inscrit dans la file. Le serveur repond directement la room si un
- * adversaire attend deja ; sinon on suit la file en direct (SSE).
+ * adversaire attend deja ; sinon on suit la file en direct par la socket.
  * L'inscription est idempotente : on peut la rejouer apres une coupure.
  */
 async function requestMatch(token) {
-  const res = await fetch(window.API_BASE_URL + '/game/matchmaking', {
+  const res = await apiFetch(window.API_BASE_URL + '/game/matchmaking', {
     method: 'POST',
     headers: {
       'Authorization': `Bearer ${token}`,
@@ -562,7 +552,7 @@ async function requestMatch(token) {
   }
   if (!isSearchingMatch) return;
   if (payload.roomId) onMatchFound(payload.roomId);
-  else openMatchmakingStream(token);
+  else watchMatchmaking();
 }
 
 function onMatchFound(roomId) {
@@ -614,31 +604,24 @@ function showMatchmakingStats(stats) {
   if (matchesEl) matchesEl.textContent = stats.activeMatches || 0;
 }
 
-function openMatchmakingStream(token) {
-  if (matchmakingEventSource) matchmakingEventSource.close();
+function onMatchmakingEvent(data) {
+  if (!matchmakingWatching || !data) return;
+  if (data.type === 'stats' && data.stats) showMatchmakingStats(data.stats);
+  if (data.type === 'matchFound' && data.roomId && data.roomId.trim() !== '') onMatchFound(data.roomId);
+}
 
-  // EventSource ne peut pas envoyer d'en-tete : le token passe en query.
-  const source = new EventSource(`${window.API_BASE_URL}/game/matchmaking/watch?token=${encodeURIComponent(token)}`);
-  matchmakingEventSource = source;
-
-  source.addEventListener('message', (event) => {
-    try {
-      const data = JSON.parse(event.data);
-      if (data.type === 'stats' && data.stats) showMatchmakingStats(data.stats);
-      if (data.type === 'matchFound' && data.roomId && data.roomId.trim() !== '') onMatchFound(data.roomId);
-    } catch (err) {
-      console.error('❌ SSE parse error:', err, event.data);
-    }
-  });
-
-  // Coupure (reseau, redemarrage du serveur) : on se reinscrit puis on rouvre
-  // le flux. Avant, la recherche restait affichee mais ne pouvait plus aboutir.
-  source.onerror = () => {
-    if (matchmakingEventSource !== source) return;
-    source.close();
-    matchmakingEventSource = null;
+/**
+ * Coupure (reseau, redemarrage du serveur) : a la reconnexion on se reinscrit
+ * puis on reprend le suivi. Sans cela la recherche resterait affichee sans
+ * pouvoir aboutir.
+ */
+function onMatchmakingReconnect() {
+  if (!isSearchingMatch) return;
+  const token = window.BrainrotAuth?.getToken?.() || '';
+  requestMatch(token).catch((err) => {
+    console.warn('Matchmaking indisponible, nouvel essai...', err);
     scheduleMatchmakingRetry(token);
-  };
+  });
 }
 
 function scheduleMatchmakingRetry(token) {
@@ -652,13 +635,31 @@ function scheduleMatchmakingRetry(token) {
   }, 2500);
 }
 
+let matchmakingListenersBound = false;
+
+function watchMatchmaking() {
+  const socket = window.BrainrotRealtime?.socket?.();
+  if (!socket) throw new Error('Connexion temps réel impossible. Réessaye !');
+  if (!matchmakingListenersBound) {
+    matchmakingListenersBound = true;
+    socket.on('mm', onMatchmakingEvent);
+    socket.on('connect', onMatchmakingReconnect);
+  }
+  matchmakingWatching = true;
+  socket.emit('mm:watch', {}, (res) => {
+    if (res && res.ok === false && isSearchingMatch) {
+      scheduleMatchmakingRetry(window.BrainrotAuth?.getToken?.() || '');
+    }
+  });
+}
+
 function clearMatchmakingPoll() {
   isSearchingMatch = false;
   clearTimeout(matchmakingRetryTimer);
   matchmakingRetryTimer = null;
-  if (matchmakingEventSource) {
-    matchmakingEventSource.close();
-    matchmakingEventSource = null;
+  if (matchmakingWatching) {
+    matchmakingWatching = false;
+    window.BrainrotRealtime?.socket?.()?.emit('mm:unwatch');
   }
   if (matchmakingTimerInterval) {
     clearInterval(matchmakingTimerInterval);
@@ -673,7 +674,7 @@ document.getElementById('cancel-matchmaking-btn')?.addEventListener('click', asy
     clearMatchmakingPoll();
     if (!token) return;
 
-    await fetch(window.API_BASE_URL + '/game/matchmaking', {
+    await apiFetch(window.API_BASE_URL + '/game/matchmaking', {
       method: 'DELETE',
       headers: {
         'Authorization': `Bearer ${token}`,
@@ -694,8 +695,9 @@ const cleanupMatchmakingOnExit = () => {
   const token = window.BrainrotAuth?.getToken?.() || '';
   clearMatchmakingPoll();
   if (!token) return;
-  // Keep-alive : la requete part meme si la page se ferme.
-  fetch(window.API_BASE_URL + '/game/matchmaking', {
+  // Par la socket encore ouverte ; si elle ne l'est plus, le serveur sort de
+  // toute facon de la file un joueur qui ne la suit plus.
+  apiFetch(window.API_BASE_URL + '/game/matchmaking', {
     method: 'DELETE',
     headers: {
       'Authorization': `Bearer ${token}`,
@@ -764,7 +766,7 @@ document.getElementById('invite-btn')?.addEventListener('click', async () => {
   // doit plus empecher de rejoindre l'arene d'un lien d'invitation.
   try {
     const token = window.BrainrotAuth?.getToken?.() || '';
-    const res = token ? await fetch(window.API_BASE_URL + '/user/stats', {
+    const res = token ? await apiFetch(window.API_BASE_URL + '/user/stats', {
       headers: { 'Authorization': `Bearer ${token}` }
     }) : null;
     const payload = res && res.ok ? await res.json() : null;
@@ -1044,7 +1046,7 @@ function showGameToast(text, duration = 2200) {
 async function fetchAvailableCards() {
   try {
     const token = window.BrainrotAuth?.getToken?.() || '';
-    const res = await fetch(window.API_BASE_URL + '/game/available-cards', {
+    const res = await apiFetch(window.API_BASE_URL + '/game/available-cards', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` }
     });
@@ -1218,7 +1220,7 @@ async function showDeckSelector() {
   try {
     const token = window.BrainrotAuth?.getToken?.() || '';
     const url = window.API_BASE_URL + '/game/getCard';
-    const res = await fetch(url, { method: 'GET' , headers: {'Content-Type':'application/json', 'Authorization': `Bearer ${token}`},});
+    const res = await apiFetch(url, { method: 'GET' , headers: {'Content-Type':'application/json', 'Authorization': `Bearer ${token}`},});
     if (res.ok) {
       const data = await res.json();
       if (data && Array.isArray(data.result)) {
@@ -1279,7 +1281,7 @@ document.getElementById('confirm-deck').addEventListener('click', async () => {
 
   try {
     const token = window.BrainrotAuth?.getToken?.() || '';
-    const res = await fetch(window.API_BASE_URL + '/game/join', {
+    const res = await apiFetch(window.API_BASE_URL + '/game/join', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -1406,7 +1408,7 @@ function handleAcceptInvitation(joinData) {
 async function handleRejectInvitation(joinData) {
   try {
     const token = window.BrainrotAuth?.getToken?.() || '';
-    await fetch(window.API_BASE_URL + '/game/reject-invitation', {
+    await apiFetch(window.API_BASE_URL + '/game/reject-invitation', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

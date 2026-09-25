@@ -11,7 +11,7 @@
 
     async function fetchUserStats(token) {
         try {
-            const response = await fetch(`${API_BASE_URL}/user/stats`, {
+            const response = await apiFetch(`${API_BASE_URL}/user/stats`, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             if (!response.ok) return null;
@@ -24,7 +24,7 @@
 
     async function fetchBattlepassRewards(token) {
         try {
-            const response = await fetch(`${API_BASE_URL}/pass`, {
+            const response = await apiFetch(`${API_BASE_URL}/pass`, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             if (!response.ok) return [];
@@ -37,7 +37,7 @@
 
     async function fetchClaims(token) {
         try {
-            const response = await fetch(`${API_BASE_URL}/pass/claims`, {
+            const response = await apiFetch(`${API_BASE_URL}/pass/claims`, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             if (!response.ok) return [];

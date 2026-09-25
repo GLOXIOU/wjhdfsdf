@@ -127,7 +127,7 @@ async function tryOpenChestApiForQty(itemId, qty) {
 
     for (const base of USER_ROUTE_BASES) {
         try {
-            const response = await fetch(`${API_BASE_URL}${base}/chest/open`, {
+            const response = await apiFetch(`${API_BASE_URL}${base}/chest/open`, {
                 method: "POST",
                 headers: {
                     "Authorization": `Bearer ${token}`,
@@ -164,7 +164,7 @@ async function fetchBrainrotItems() {
             return cachedBrainrotCatalog;
         }
 
-        const response = await fetch(`${API_BASE_URL}/user/getAllBrainRot`);
+        const response = await apiFetch(`${API_BASE_URL}/user/getAllBrainRot`);
         if (!response.ok) {
             return null;
         }
@@ -413,7 +413,7 @@ async function fetchUserInventory() {
     const token = getAuthToken();
     if (!token) return;
     try {
-        const response = await fetch(`${API_BASE_URL}/user/inv`, {
+        const response = await apiFetch(`${API_BASE_URL}/user/inv`, {
             method: "GET",
             headers: {
                 "Authorization": `Bearer ${token}`
@@ -458,7 +458,7 @@ async function fetchUserStats() {
     if (!token) return null;
     for (const base of USER_ROUTE_BASES) {
         try {
-            const response = await fetch(`${API_BASE_URL}${base}/stats`, {
+            const response = await apiFetch(`${API_BASE_URL}${base}/stats`, {
                 headers: {
                     "Authorization": `Bearer ${token}`
                 }
@@ -477,7 +477,7 @@ async function fetchUserStats() {
 async function fetchUserGold(token) {
     for (const base of USER_ROUTE_BASES) {
         try {
-            const response = await fetch(`${API_BASE_URL}${base}/gold`, {
+            const response = await apiFetch(`${API_BASE_URL}${base}/gold`, {
                 headers: {
                     "Authorization": `Bearer ${token}`
                 }
@@ -533,7 +533,7 @@ async function buyShopItemByApi(itemId, qty) {
     
     // Un seul appel API pour acheter toutes les caisses
     try {
-        const response = await fetch(`${API_BASE_URL}${SHOP_ROUTE_BASE}/buy/${encodeURIComponent(itemId)}/${safeQty}`, {
+        const response = await apiFetch(`${API_BASE_URL}${SHOP_ROUTE_BASE}/buy/${encodeURIComponent(itemId)}/${safeQty}`, {
             method: "POST",
             headers: {
                 "Authorization": `Bearer ${token}`
@@ -997,7 +997,7 @@ async function loadShop() {
     try {
         const token = await window.BrainrotAuth.waitUntilReady();
         if (!token) throw new Error("No auth token");
-        const response = await fetch(`${API_BASE_URL}${SHOP_ROUTE_BASE}`, {
+        const response = await apiFetch(`${API_BASE_URL}${SHOP_ROUTE_BASE}`, {
             headers: { "Authorization": `Bearer ${token}` }
         });
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
@@ -1098,7 +1098,7 @@ document.addEventListener("DOMContentLoaded", () => {
         }
 
         try {
-            const response = await fetch(`${API_BASE_URL}/code/${encodeURIComponent(code)}`, {
+            const response = await apiFetch(`${API_BASE_URL}/code/${encodeURIComponent(code)}`, {
                 method: "GET",
                 headers: {
                     "Authorization": `Bearer ${token}`

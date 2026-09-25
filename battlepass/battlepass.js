@@ -40,7 +40,7 @@ async function getUserStats() {
 
     for (const base of USER_ROUTE_BASES) {
         try {
-            const response = await fetch(`${API_BASE_URL}${base}/stats`, {
+            const response = await apiFetch(`${API_BASE_URL}${base}/stats`, {
                 headers: { "Authorization": `Bearer ${token}` }
             });
             if (!response.ok) continue;
@@ -60,7 +60,7 @@ async function getBattlePassRewards() {
     if (!token) return [];
 
     try {
-        const response = await fetch(`${API_BASE_URL}${PASS_ROUTE_BASE}`, {
+        const response = await apiFetch(`${API_BASE_URL}${PASS_ROUTE_BASE}`, {
             headers: { "Authorization": `Bearer ${token}` }
         });
         if (!response.ok) return [];
@@ -97,7 +97,7 @@ async function getClaimedRewards() {
     if (!token) return;
 
     try {
-        const response = await fetch(`${API_BASE_URL}${PASS_ROUTE_BASE}/claims`, {
+        const response = await apiFetch(`${API_BASE_URL}${PASS_ROUTE_BASE}/claims`, {
             headers: { "Authorization": `Bearer ${token}` }
         });
         if (!response.ok) return;
@@ -142,7 +142,7 @@ async function purchaseBattlePass() {
     }
 
     try {
-        const response = await fetch(`${API_BASE_URL}${PASS_ROUTE_BASE}/buy`, {
+        const response = await apiFetch(`${API_BASE_URL}${PASS_ROUTE_BASE}/buy`, {
             method: "POST",
             headers: { "Authorization": `Bearer ${token}` }
         });
@@ -175,7 +175,7 @@ async function claimReward(battlepassId, entry) {
     if (!token) return;
 
     try {
-        const response = await fetch(`${API_BASE_URL}${PASS_ROUTE_BASE}/claim`, {
+        const response = await apiFetch(`${API_BASE_URL}${PASS_ROUTE_BASE}/claim`, {
             method: "POST",
             headers: {
                 "Authorization": `Bearer ${token}`,

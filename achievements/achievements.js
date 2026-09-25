@@ -95,7 +95,7 @@ function renderCategories(data) {
 async function loadAchievements() {
     GlobalLoader.show();
     try {
-        const response = await fetch(window.API_BASE_URL + "/api/achievements");
+        const response = await apiFetch(window.API_BASE_URL + "/api/achievements");
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
         const data = await response.json();
         renderCategories(data);

@@ -97,7 +97,7 @@ function getAuthToken() {
 async function apiCall(path, { method = "GET", body } = {}) {
     const token = getAuthToken();
     try {
-        const response = await fetch(`${API_BASE_URL}${path}`, {
+        const response = await apiFetch(`${API_BASE_URL}${path}`, {
             method,
             headers: {
                 "Content-Type": "application/json",
@@ -181,7 +181,7 @@ async function fetchWallet() {
 /** Catalogue complet : sert uniquement a remplir les filtres de rareté. */
 async function fetchAllCards() {
     try {
-        const response = await fetch(`${API_BASE_URL}/user/getAllBrainRot`);
+        const response = await apiFetch(`${API_BASE_URL}/user/getAllBrainRot`);
         if (!response.ok) return [];
         const payload = await response.json();
         return payload?.success && Array.isArray(payload.result) ? payload.result : [];

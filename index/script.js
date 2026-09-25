@@ -76,7 +76,7 @@ const App = {
         const badge = document.getElementById("village-notif-badge");
         if (!badge) return;
         try {
-            const response = await fetch(`${this.apiBaseUrl}/village/status`, {
+            const response = await apiFetch(`${this.apiBaseUrl}/village/status`, {
                 headers: { "Authorization": `Bearer ${token}` }
             });
             if (!response.ok) return;
@@ -95,7 +95,7 @@ const App = {
 
     async loadAchievements() {
         try {
-            const response = await fetch(`${this.apiBaseUrl}/api/achievements`);
+            const response = await apiFetch(`${this.apiBaseUrl}/api/achievements`);
             if (!response.ok) throw new Error(`HTTP ${response.status}`);
 
             const data = await response.json();
@@ -151,7 +151,7 @@ const App = {
     async fetchUserStats(token) {
         for (const base of this.userRouteBases) {
             try {
-                const response = await fetch(`${this.apiBaseUrl}${base}/stats`, {
+                const response = await apiFetch(`${this.apiBaseUrl}${base}/stats`, {
                     headers: {
                         "Authorization": `Bearer ${token}`
                     }
@@ -171,7 +171,7 @@ const App = {
     async fetchUserGold(token) {
         for (const base of this.userRouteBases) {
             try {
-                const response = await fetch(`${this.apiBaseUrl}${base}/gold`, {
+                const response = await apiFetch(`${this.apiBaseUrl}${base}/gold`, {
                     headers: {
                         "Authorization": `Bearer ${token}`
                     }
@@ -241,7 +241,7 @@ const App = {
                         throw new Error('Non authentifié');
                     }
 
-                    const response = await fetch(window.API_BASE_URL + '/game/matchmaking', {
+                    const response = await apiFetch(window.API_BASE_URL + '/game/matchmaking', {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
@@ -379,7 +379,7 @@ const joinMatch = async (matchCode) => {
     console.log(`Tentative de connexion au match: ${matchCode}`);
 
     // Appel à l'API pour joindre la room
-    const response = await fetch(window.API_BASE_URL + '/game/join', {
+    const response = await apiFetch(window.API_BASE_URL + '/game/join', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

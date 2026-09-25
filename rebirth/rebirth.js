@@ -137,7 +137,7 @@ async function fetchUserStats() {
     if (!token) return null;
     for (const base of USER_ROUTE_BASES) {
         try {
-            const response = await fetch(`${API_BASE_URL}${base}/stats`, {
+            const response = await apiFetch(`${API_BASE_URL}${base}/stats`, {
                 headers: { "Authorization": `Bearer ${token}` }
             });
             if (!response.ok) continue;
@@ -154,7 +154,7 @@ async function fetchUserStats() {
 async function fetchUserGold(token) {
     for (const base of USER_ROUTE_BASES) {
         try {
-            const response = await fetch(`${API_BASE_URL}${base}/gold`, {
+            const response = await apiFetch(`${API_BASE_URL}${base}/gold`, {
                 headers: { "Authorization": `Bearer ${token}` }
             });
             if (!response.ok) continue;
@@ -350,7 +350,7 @@ function bindEvents() {
 
         let payload = null;
         try {
-            const response = await fetch(`${API_BASE_URL}/user/rebirth`, {
+            const response = await apiFetch(`${API_BASE_URL}/user/rebirth`, {
                 method: "POST",
                 headers: { "Authorization": `Bearer ${token}` }
             });

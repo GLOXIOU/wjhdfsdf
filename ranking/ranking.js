@@ -33,7 +33,7 @@ function normalizeLeaderboardRows(rows) {
 }
 
 async function fetchUserStats(token) {
-    const response = await fetch(`${API_BASE_URL}/user/stats`, {
+    const response = await apiFetch(`${API_BASE_URL}/user/stats`, {
         headers: {
             Authorization: `Bearer ${token}`
         }
@@ -49,7 +49,7 @@ async function fetchUserStats(token) {
 }
 
 async function fetchLeaderboard(type, token) {
-    const response = await fetch(`${API_BASE_URL}${LEADERBOARD_ROUTE_BASE}/${type}`, {
+    const response = await apiFetch(`${API_BASE_URL}${LEADERBOARD_ROUTE_BASE}/${type}`, {
         headers: {
             Authorization: `Bearer ${token}`
         }

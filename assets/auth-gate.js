@@ -32,7 +32,7 @@
     }
 
     async function isTokenValid(token) {
-        const response = await fetch(`${API_BASE_URL}${USER_ROUTE_BASE}/login`, {
+        const response = await apiFetch(`${API_BASE_URL}${USER_ROUTE_BASE}/login`, {
             method: "POST",
             headers: {
                 Authorization: "Bearer " + token

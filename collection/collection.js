@@ -47,7 +47,7 @@ async function fetchOwnedCards() {
 
     for (const base of USER_ROUTE_BASES) {
         try {
-            const response = await fetch(`${API_BASE_URL}${base}/cards`, {
+            const response = await apiFetch(`${API_BASE_URL}${base}/cards`, {
                 headers: {
                     "Authorization": `Bearer ${token}`
                 }
@@ -94,7 +94,7 @@ function getItemLevel(item) {
 
 async function fetchAllCards() {
     try {
-        const response = await fetch(`${API_BASE_URL}/user/getAllBrainRot`);
+        const response = await apiFetch(`${API_BASE_URL}/user/getAllBrainRot`);
         if (!response.ok) {
             throw new Error('Failed to fetch cards');
         }
