@@ -360,13 +360,16 @@ function closeLeaveGameModal() {
 }
 
 // En phase de capture : on passe avant les handlers propres aux boutons
-// (le Profil redirige en JS, ce n'est pas un simple lien).
-document.querySelector('.navbar')?.addEventListener('click', (ev) => {
+// (le Profil redirige en JS, ce n'est pas un simple lien). Couvre la navbar
+// et le menu hamburger mobile, mais pas le bouton qui ouvre ce menu.
+document.addEventListener('click', (ev) => {
   if (leaveConfirmed || !isMatchInProgress()) return;
-  const target = ev.target.closest('a, button');
-  if (!target) return;
+  const target = ev.target.closest('.navbar a, .navbar button, .mobile-menu-overlay a, .mobile-menu-overlay button');
+  if (!target || target.classList.contains('mobile-menu-btn')) return;
   ev.preventDefault();
   ev.stopPropagation();
+  // Le menu mobile se referme : le modal s'affiche seul.
+  if (target.closest('.mobile-menu-overlay')) document.querySelector('.mobile-menu-btn.active')?.click();
   openLeaveGameModal(target);
 }, true);
 

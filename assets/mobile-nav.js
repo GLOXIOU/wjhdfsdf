@@ -33,6 +33,9 @@ document.addEventListener("DOMContentLoaded", () => {
         clone.classList.add("mobile-menu-item");
         const badge = clone.querySelector(".nav-badge");
         if (badge) badge.remove();
+        // cloneNode ne copie pas les ecouteurs : un bouton (Profil) relaie son
+        // clic a l'original, sinon il ne faisait rien dans le menu mobile.
+        if (link.tagName === "BUTTON") clone.addEventListener("click", () => link.click());
         return clone;
     });
 

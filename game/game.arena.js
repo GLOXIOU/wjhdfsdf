@@ -19,7 +19,7 @@
   const RIVER_L = 428;
   const RIVER_R = 472;
   const BRIDGES = [95, 305];
-  const BRIDGE_HALF = 24;
+  const BRIDGE_HALF = 34; // meme valeur que ARENA.BRIDGE_HALF cote serveur
   const LANE_SPLIT = 200;
   const POCKET = 150;
   const INTERP_MS = 110;
@@ -481,7 +481,8 @@
     const team = teamOf(e.ownerId);
     const ground = P(p.x, p.y);
     const x = ground.x;
-    const lift = e.flying ? 16 : 0;
+    // Un volant flotte nettement au-dessus de son ombre : on voit qu'il survole.
+    const lift = e.flying ? 24 + Math.sin(now / 260 + e.bornAt) * 3 : 0;
     const y = ground.y - lift;
     const size = Math.max(22, (e.radius || 11) * 2.7);
     const st = e.st || 0;
@@ -496,6 +497,17 @@
     ctx.lineWidth = 3;
     ctx.beginPath(); ctx.ellipse(x, ground.y + size * 0.34, size * 0.4, size * 0.16, 0, 0, Math.PI * 2); ctx.stroke();
 
+    if (e.flying) {
+      // Ailes de part et d'autre (la gauche en miroir), qui battent.
+      const flap = Math.sin(now / 90) * 2;
+      const wing = Math.round(size * 0.6);
+      drawEmoji('🪽', x + size * 0.48, y - 3 + flap, wing);
+      ctx.save();
+      ctx.translate(x - size * 0.48, y - 3 + flap);
+      ctx.scale(-1, 1);
+      drawEmoji('🪽', 0, 0, wing);
+      ctx.restore();
+    }
     const pulse = st & 1 ? 1 + 0.1 * Math.abs(Math.sin(now / 90)) : 1;
     drawPortrait(e, x, y, size * pulse);
 
@@ -696,13 +708,8 @@
      Role d'une carte (meme regle que le serveur, pour l'affichage)
      ---------------------------------------------------------------------- */
 
-  const FLY_NAME = /(bombardiro|avion|aereo|dragon|drago|flaming|volant|ptero|bat\b|pipistrell|uccell|bird|eagle|aquila|angel|ange|mosquit|mosqueira|ape\b|abeille|bee\b|papill|farfall|jet\b|rocket|astro|nuvol|cloud|ventoso)/i;
+  const FLY_NAME = /\b(bombardiro|avion|aereo|dragon|drago|flamingo|volant\w*|ptero\w*|bat|pipistrell\w*|uccell\w*|bird|eagle|aquila|angel\w*|ange|mosquit\w*|mosqueira|ape|abeille|bee|papill\w*|farfall\w*|jet|rocket|astro\w*|nuvol\w*|cloud|ventoso)\b/i;
   const FLY_EMOJI = new Set(['🦅', '🐉', '🐲', '🦇', '🐦', '🕊️', '🦋', '🐝', '✈️', '🛩️', '🚀', '🦜', '🦩', '🪽', '👼', '🛸', '🦟', '☁️']);
-  function nameHash(name) {
-    let h = 7;
-    for (let i = 0; i < name.length; i++) h = (Math.imul(h, 31) + name.charCodeAt(i)) >>> 0;
-    return h;
-  }
 
   function roleOf(card) {
     if (!card || card.type === 'spell') return { key: 'spell', label: '🧨 Objet à lancer' };
@@ -711,7 +718,7 @@
     const ratio = atk + def > 0 ? def / (atk + def) : 0.5;
     const role = ratio >= 0.7 ? 'tank' : ratio <= 0.42 ? 'ranged' : 'melee';
     const name = card.name || '';
-    const flying = role !== 'tank' && (FLY_NAME.test(name) || FLY_EMOJI.has(card.emoji) || nameHash(name) % 5 === 0);
+    const flying = role !== 'tank' && (FLY_NAME.test(name) || FLY_EMOJI.has(card.emoji));
     const label = role === 'tank' ? '🛡️ Tank · vise les tours' : role === 'ranged' ? '🏹 Tireur' : '⚔️ Mêlée';
     return { key: role, flying, label: flying ? label + ' · 🪽 Volant' : label };
   }
