@@ -1,7 +1,7 @@
 (() => {
-  const PROD_API_BASE_URL = "https://bsstar.dino.icu/";
+  const PROD_API_BASE_URL = "https://proxy-bsstar.llexllex-proxy.workers.dev";
 
-  const LOCAL_API_BASE_URL = "https://bsstar.dino.icu/";
+  const LOCAL_API_BASE_URL = "https://proxy-bsstar.llexllex-proxy.workers.dev";
   const PROD_STATS_URL = "";
   const LOCAL_STATS_URL = "http://localhost:4000";
 
